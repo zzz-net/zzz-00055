@@ -11,7 +11,7 @@
     "check": "tsc --noEmit",
     "server:dev": "nodemon",
     "dev": "concurrently \"npm run client:dev\" \"npm run server:dev\"",
-    "test": "node --import tsx --test tests/regression.test.ts tests/api-routes.test.ts"
+    "test": "node --import tsx --test tests/regression.test.ts tests/api-routes.test.ts tests/docs-consistency.test.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",

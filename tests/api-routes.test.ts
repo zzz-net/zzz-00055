@@ -129,7 +129,7 @@ function httpUpload(
 }
 
 const HOST = '127.0.0.1';
-const PORT = 39876;
+const PORT = 39877;
 
 describe('API 路由一致性测试（文档 vs 实际路由）', () => {
   let server: http.Server;
@@ -144,7 +144,8 @@ describe('API 路由一致性测试（文档 vs 实际路由）', () => {
 
     server = http.createServer(app);
 
-    await new Promise<void>((resolve) => {
+    await new Promise<void>((resolve, reject) => {
+      server.on('error', reject);
       server.listen(PORT, HOST, () => resolve());
     });
 
@@ -174,8 +175,10 @@ describe('API 路由一致性测试（文档 vs 实际路由）', () => {
     await saveDb();
   });
 
-  after(() => {
-    server.close();
+  after(async () => {
+    await new Promise<void>((resolve) => {
+      server.close(() => resolve());
+    });
 
     if (fs.existsSync(BACKUP_PATH)) {
       fs.copyFileSync(BACKUP_PATH, DB_PATH);
