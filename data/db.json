@@ -1,0 +1,656 @@
+{
+  "batches": [
+    {
+      "id": "02d8cca9-89be-420c-bb03-fefa8a5dc1f4",
+      "name": "roof_points_202606.csv",
+      "type": "points",
+      "status": "success",
+      "importedAt": "2026-06-15T17:01:58.213Z",
+      "totalRecords": 12,
+      "validRecords": 12,
+      "invalidRecords": 0,
+      "errors": []
+    },
+    {
+      "id": "026d1294-e776-45bc-963b-dfc2d1dace22",
+      "name": "defects_202606.json",
+      "type": "defects",
+      "status": "success",
+      "importedAt": "2026-06-15T17:02:12.050Z",
+      "totalRecords": 8,
+      "validRecords": 8,
+      "invalidRecords": 0,
+      "errors": []
+    },
+    {
+      "id": "0269a36a-a144-4b45-87c6-f7eca40c6030",
+      "name": "rectification_202606.csv",
+      "type": "rectification",
+      "status": "success",
+      "importedAt": "2026-06-15T17:03:06.654Z",
+      "totalRecords": 3,
+      "validRecords": 3,
+      "invalidRecords": 0,
+      "errors": []
+    },
+    {
+      "id": "131ecac8-a661-4051-b43c-6a15ccd210f0",
+      "name": "roof_points_invalid.csv",
+      "type": "points",
+      "status": "success",
+      "importedAt": "2026-06-15T17:12:45.762Z",
+      "totalRecords": 7,
+      "validRecords": 1,
+      "invalidRecords": 6,
+      "errors": [
+        {
+          "row": 1,
+          "field": "pointCode",
+          "message": "点位编号重复",
+          "value": "P-001"
+        },
+        {
+          "row": 2,
+          "field": "pointCode",
+          "message": "点位编号重复",
+          "value": "P-001"
+        },
+        {
+          "row": 3,
+          "field": "pointCode",
+          "message": "点位编号不能为空",
+          "value": ""
+        },
+        {
+          "row": 4,
+          "field": "pointCode",
+          "message": "点位编号重复",
+          "value": "P-004"
+        },
+        {
+          "row": 4,
+          "field": "x",
+          "message": "X坐标必须为有效数字",
+          "value": "abc"
+        },
+        {
+          "row": 5,
+          "field": "pointCode",
+          "message": "点位编号重复",
+          "value": "P-005"
+        },
+        {
+          "row": 5,
+          "field": "y",
+          "message": "Y坐标必须为有效数字",
+          "value": ""
+        },
+        {
+          "row": 6,
+          "field": "pointCode",
+          "message": "点位编号重复",
+          "value": "P-006"
+        },
+        {
+          "row": 6,
+          "field": "z",
+          "message": "Z坐标必须为有效数字",
+          "value": "非法"
+        }
+      ],
+      "errorMessage": "存在 6 条无效记录"
+    }
+  ],
+  "points": [
+    {
+      "id": "ed99c733-4e00-40fd-82bf-545b19821f75",
+      "batchId": "02d8cca9-89be-420c-bb03-fefa8a5dc1f4",
+      "pointCode": "P-001",
+      "x": 10.5,
+      "y": 20.3,
+      "z": 5.2,
+      "description": "屋顶东南角点位"
+    },
+    {
+      "id": "bef11398-9edf-4f8a-bbde-56bbe3a23a73",
+      "batchId": "02d8cca9-89be-420c-bb03-fefa8a5dc1f4",
+      "pointCode": "P-002",
+      "x": 12.1,
+      "y": 20.5,
+      "z": 5.3,
+      "description": "屋顶东南角相邻点位"
+    },
+    {
+      "id": "fcae209b-2614-418f-978d-0ce8d7fb2979",
+      "batchId": "02d8cca9-89be-420c-bb03-fefa8a5dc1f4",
+      "pointCode": "P-003",
+      "x": 15,
+      "y": 20,
+      "z": 5.1,
+      "description": "屋顶中部点位"
+    },
+    {
+      "id": "1ebac329-d9e1-41cf-b1c6-6febd9a72456",
+      "batchId": "02d8cca9-89be-420c-bb03-fefa8a5dc1f4",
+      "pointCode": "P-004",
+      "x": 18.5,
+      "y": 20.2,
+      "z": 5,
+      "description": "屋顶中东部点位"
+    },
+    {
+      "id": "c26ed5c1-ad74-4831-a612-103c076157e3",
+      "batchId": "02d8cca9-89be-420c-bb03-fefa8a5dc1f4",
+      "pointCode": "P-005",
+      "x": 22,
+      "y": 20.4,
+      "z": 5.2,
+      "description": "屋顶东北角点位"
+    },
+    {
+      "id": "504f83db-c0e8-4990-b68b-92054ca7c988",
+      "batchId": "02d8cca9-89be-420c-bb03-fefa8a5dc1f4",
+      "pointCode": "P-006",
+      "x": 10.3,
+      "y": 25.5,
+      "z": 4.8,
+      "description": "屋顶南中部点位"
+    },
+    {
+      "id": "77f126b3-2acc-4204-aef0-923b39b42320",
+      "batchId": "02d8cca9-89be-420c-bb03-fefa8a5dc1f4",
+      "pointCode": "P-007",
+      "x": 15.2,
+      "y": 25,
+      "z": 4.9,
+      "description": "屋顶中心点位"
+    },
+    {
+      "id": "ef73bc2d-0e82-405d-ba9d-cedcdffa9920",
+      "batchId": "02d8cca9-89be-420c-bb03-fefa8a5dc1f4",
+      "pointCode": "P-008",
+      "x": 20,
+      "y": 25.3,
+      "z": 5,
+      "description": "屋顶北中部点位"
+    },
+    {
+      "id": "ab1197c0-6062-4815-bc1b-9cf9a6689492",
+      "batchId": "02d8cca9-89be-420c-bb03-fefa8a5dc1f4",
+      "pointCode": "P-009",
+      "x": 10,
+      "y": 30,
+      "z": 4.7,
+      "description": "屋顶西南角点位"
+    },
+    {
+      "id": "e112b0c4-22ae-487c-8777-54fc58aa14eb",
+      "batchId": "02d8cca9-89be-420c-bb03-fefa8a5dc1f4",
+      "pointCode": "P-010",
+      "x": 15.5,
+      "y": 30.2,
+      "z": 4.8,
+      "description": "屋顶西中部点位"
+    },
+    {
+      "id": "89de2105-86e0-4e0c-8836-3b10bc5557b9",
+      "batchId": "02d8cca9-89be-420c-bb03-fefa8a5dc1f4",
+      "pointCode": "P-011",
+      "x": 20.5,
+      "y": 30.5,
+      "z": 4.9,
+      "description": "屋顶西北角点位"
+    },
+    {
+      "id": "a67e0f20-6081-498e-869c-b1457fc8b4ce",
+      "batchId": "02d8cca9-89be-420c-bb03-fefa8a5dc1f4",
+      "pointCode": "P-012",
+      "x": 11,
+      "y": 22,
+      "z": 5.1,
+      "description": "靠近P-001的缺陷点"
+    },
+    {
+      "id": "755efd52-d8ca-4f5d-a879-162aaf320cd3",
+      "batchId": "131ecac8-a661-4051-b43c-6a15ccd210f0",
+      "pointCode": "P-999",
+      "x": 1000,
+      "y": 1000,
+      "z": 10,
+      "description": "超大坐标测试"
+    }
+  ],
+  "defects": [
+    {
+      "id": "fc2fa746-5916-46e6-89af-542c8e59a6d0",
+      "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+      "pointCode": "P-001",
+      "defectType": "crack",
+      "severity": "major",
+      "description": "屋顶东南角发现长度约30cm的横向裂缝",
+      "detectedAt": "2026-06-10T09:30:00Z"
+    },
+    {
+      "id": "f6db56ac-91a3-472e-be35-551556759ba7",
+      "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+      "pointCode": "P-002",
+      "defectType": "water_leakage",
+      "severity": "critical",
+      "description": "东南角相邻点位发现明显渗水痕迹",
+      "detectedAt": "2026-06-10T09:35:00Z"
+    },
+    {
+      "id": "3369ffda-5329-4130-86df-5ff0b7c8aa35",
+      "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+      "pointCode": "P-003",
+      "defectType": "crack",
+      "severity": "medium",
+      "description": "屋顶中部发现长度约15cm的纵向裂缝",
+      "detectedAt": "2026-06-10T09:40:00Z"
+    },
+    {
+      "id": "bbcbec19-e04e-4dae-98c4-a897d72dfab1",
+      "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+      "pointCode": "P-005",
+      "defectType": "loose_material",
+      "severity": "minor",
+      "description": "屋顶东北角发现少量松散材料",
+      "detectedAt": "2026-06-10T09:45:00Z"
+    },
+    {
+      "id": "a73e85fc-f274-4a48-a409-fd47b81b9bf3",
+      "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+      "pointCode": "P-007",
+      "defectType": "water_leakage",
+      "severity": "major",
+      "description": "屋顶中心发现渗水区域约0.5平方米",
+      "detectedAt": "2026-06-10T09:50:00Z"
+    },
+    {
+      "id": "55b420e2-a2b3-483d-a2ae-992fed08753e",
+      "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+      "pointCode": "P-009",
+      "defectType": "crack",
+      "severity": "critical",
+      "description": "屋顶西南角发现长度约50cm的贯穿性裂缝",
+      "detectedAt": "2026-06-10T09:55:00Z"
+    },
+    {
+      "id": "35e04dd2-cb22-4672-9938-6a995ab3466f",
+      "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+      "pointCode": "P-011",
+      "defectType": "loose_material",
+      "severity": "medium",
+      "description": "屋顶西北角发现较多松散防水材料",
+      "detectedAt": "2026-06-10T10:00:00Z"
+    },
+    {
+      "id": "30e15dca-53b3-4ff0-b8f3-0ed141980b43",
+      "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+      "pointCode": "P-012",
+      "defectType": "crack",
+      "severity": "minor",
+      "description": "靠近P-001处发现微小裂纹",
+      "detectedAt": "2026-06-10T10:05:00Z"
+    }
+  ],
+  "rectifications": [
+    {
+      "id": "7a3cd920-9cde-41b9-a407-ea97d4fb0f23",
+      "batchId": "0269a36a-a144-4b45-87c6-f7eca40c6030",
+      "eventId": "20d5d84c-3cc6-4ef2-8d13-1cd1d7a5ec06",
+      "pointCode": "P-001",
+      "rectificationMeasure": "使用环氧树脂修补裂缝",
+      "rectifier": "张三",
+      "rectifiedAt": "2026-06-12T14:00:00Z",
+      "remark": "已完成裂缝修补"
+    },
+    {
+      "id": "6b83dd33-0713-465e-8406-803f7c5869f9",
+      "batchId": "0269a36a-a144-4b45-87c6-f7eca40c6030",
+      "eventId": "20d5d84c-3cc6-4ef2-8d13-1cd1d7a5ec06",
+      "pointCode": "P-002",
+      "rectificationMeasure": "先清理渗水区域",
+      "rectifier": "再做防水处理",
+      "rectifiedAt": "李四",
+      "remark": "2026-06-13T10:30:00Z"
+    },
+    {
+      "id": "a61fb293-33c3-4846-be86-d431a7405e90",
+      "batchId": "0269a36a-a144-4b45-87c6-f7eca40c6030",
+      "eventId": "0421824c-ee0e-43c7-afb2-0971d97e6284",
+      "pointCode": "P-007",
+      "rectificationMeasure": "对渗水区域进行全面防水处理",
+      "rectifier": "王五",
+      "rectifiedAt": "2026-06-14T09:00:00Z",
+      "remark": "已完成中心区域防水"
+    }
+  ],
+  "events": [
+    {
+      "id": "20d5d84c-3cc6-4ef2-8d13-1cd1d7a5ec06",
+      "status": "closed",
+      "mergedDefectIds": [
+        "f6db56ac-91a3-472e-be35-551556759ba7",
+        "fc2fa746-5916-46e6-89af-542c8e59a6d0",
+        "3369ffda-5329-4130-86df-5ff0b7c8aa35",
+        "30e15dca-53b3-4ff0-b8f3-0ed141980b43"
+      ],
+      "primaryDefectId": "f6db56ac-91a3-472e-be35-551556759ba7",
+      "centerX": 12.15,
+      "centerY": 20.7,
+      "level": "一级",
+      "ruleVersion": "1.0.0",
+      "sourceEvidence": [
+        {
+          "type": "defect",
+          "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+          "batchName": "defects_202606.json",
+          "recordId": "f6db56ac-91a3-472e-be35-551556759ba7",
+          "data": {
+            "id": "f6db56ac-91a3-472e-be35-551556759ba7",
+            "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+            "pointCode": "P-002",
+            "defectType": "water_leakage",
+            "severity": "critical",
+            "description": "东南角相邻点位发现明显渗水痕迹",
+            "detectedAt": "2026-06-10T09:35:00Z",
+            "x": 12.1,
+            "y": 20.5
+          }
+        },
+        {
+          "type": "defect",
+          "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+          "batchName": "defects_202606.json",
+          "recordId": "fc2fa746-5916-46e6-89af-542c8e59a6d0",
+          "data": {
+            "id": "fc2fa746-5916-46e6-89af-542c8e59a6d0",
+            "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+            "pointCode": "P-001",
+            "defectType": "crack",
+            "severity": "major",
+            "description": "屋顶东南角发现长度约30cm的横向裂缝",
+            "detectedAt": "2026-06-10T09:30:00Z",
+            "x": 10.5,
+            "y": 20.3
+          }
+        },
+        {
+          "type": "defect",
+          "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+          "batchName": "defects_202606.json",
+          "recordId": "3369ffda-5329-4130-86df-5ff0b7c8aa35",
+          "data": {
+            "id": "3369ffda-5329-4130-86df-5ff0b7c8aa35",
+            "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+            "pointCode": "P-003",
+            "defectType": "crack",
+            "severity": "medium",
+            "description": "屋顶中部发现长度约15cm的纵向裂缝",
+            "detectedAt": "2026-06-10T09:40:00Z",
+            "x": 15,
+            "y": 20
+          }
+        },
+        {
+          "type": "defect",
+          "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+          "batchName": "defects_202606.json",
+          "recordId": "30e15dca-53b3-4ff0-b8f3-0ed141980b43",
+          "data": {
+            "id": "30e15dca-53b3-4ff0-b8f3-0ed141980b43",
+            "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+            "pointCode": "P-012",
+            "defectType": "crack",
+            "severity": "minor",
+            "description": "靠近P-001处发现微小裂纹",
+            "detectedAt": "2026-06-10T10:05:00Z",
+            "x": 11,
+            "y": 22
+          }
+        },
+        {
+          "type": "rectification",
+          "batchId": "0269a36a-a144-4b45-87c6-f7eca40c6030",
+          "batchName": "rectification_202606.csv",
+          "recordId": "7a3cd920-9cde-41b9-a407-ea97d4fb0f23",
+          "data": {
+            "id": "7a3cd920-9cde-41b9-a407-ea97d4fb0f23",
+            "batchId": "0269a36a-a144-4b45-87c6-f7eca40c6030",
+            "eventId": "20d5d84c-3cc6-4ef2-8d13-1cd1d7a5ec06",
+            "pointCode": "P-001",
+            "rectificationMeasure": "使用环氧树脂修补裂缝",
+            "rectifier": "张三",
+            "rectifiedAt": "2026-06-12T14:00:00Z",
+            "remark": "已完成裂缝修补"
+          }
+        }
+      ],
+      "createdAt": "2026-06-15T17:02:12.053Z",
+      "updatedAt": "2026-06-15T17:11:57.077Z",
+      "reviewRemark": "该缺陷为屋面卷材开裂，需立即处理",
+      "reviewer": "张三",
+      "reviewedAt": "2026-06-15T17:11:28.287Z",
+      "closedAt": "2026-06-15T17:11:57.077Z",
+      "closer": "赵六"
+    },
+    {
+      "id": "0317c973-46fe-4584-8caa-1fce1509af99",
+      "status": "pending",
+      "mergedDefectIds": [
+        "55b420e2-a2b3-483d-a2ae-992fed08753e"
+      ],
+      "primaryDefectId": "55b420e2-a2b3-483d-a2ae-992fed08753e",
+      "centerX": 10,
+      "centerY": 30,
+      "level": "一级",
+      "ruleVersion": "1.0.0",
+      "sourceEvidence": [
+        {
+          "type": "defect",
+          "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+          "batchName": "defects_202606.json",
+          "recordId": "55b420e2-a2b3-483d-a2ae-992fed08753e",
+          "data": {
+            "id": "55b420e2-a2b3-483d-a2ae-992fed08753e",
+            "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+            "pointCode": "P-009",
+            "defectType": "crack",
+            "severity": "critical",
+            "description": "屋顶西南角发现长度约50cm的贯穿性裂缝",
+            "detectedAt": "2026-06-10T09:55:00Z",
+            "x": 10,
+            "y": 30
+          }
+        }
+      ],
+      "createdAt": "2026-06-15T17:02:12.053Z",
+      "updatedAt": "2026-06-15T17:02:12.053Z"
+    },
+    {
+      "id": "0421824c-ee0e-43c7-afb2-0971d97e6284",
+      "status": "pending",
+      "mergedDefectIds": [
+        "a73e85fc-f274-4a48-a409-fd47b81b9bf3"
+      ],
+      "primaryDefectId": "a73e85fc-f274-4a48-a409-fd47b81b9bf3",
+      "centerX": 15.2,
+      "centerY": 25,
+      "level": "二级",
+      "ruleVersion": "1.0.0",
+      "sourceEvidence": [
+        {
+          "type": "defect",
+          "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+          "batchName": "defects_202606.json",
+          "recordId": "a73e85fc-f274-4a48-a409-fd47b81b9bf3",
+          "data": {
+            "id": "a73e85fc-f274-4a48-a409-fd47b81b9bf3",
+            "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+            "pointCode": "P-007",
+            "defectType": "water_leakage",
+            "severity": "major",
+            "description": "屋顶中心发现渗水区域约0.5平方米",
+            "detectedAt": "2026-06-10T09:50:00Z",
+            "x": 15.2,
+            "y": 25
+          }
+        },
+        {
+          "type": "rectification",
+          "batchId": "0269a36a-a144-4b45-87c6-f7eca40c6030",
+          "batchName": "rectification_202606.csv",
+          "recordId": "a61fb293-33c3-4846-be86-d431a7405e90",
+          "data": {
+            "id": "a61fb293-33c3-4846-be86-d431a7405e90",
+            "batchId": "0269a36a-a144-4b45-87c6-f7eca40c6030",
+            "eventId": "0421824c-ee0e-43c7-afb2-0971d97e6284",
+            "pointCode": "P-007",
+            "rectificationMeasure": "对渗水区域进行全面防水处理",
+            "rectifier": "王五",
+            "rectifiedAt": "2026-06-14T09:00:00Z",
+            "remark": "已完成中心区域防水"
+          }
+        }
+      ],
+      "createdAt": "2026-06-15T17:02:12.053Z",
+      "updatedAt": "2026-06-15T17:03:06.658Z"
+    },
+    {
+      "id": "20df2f93-42cf-45ab-8dc6-e5bf99e980fe",
+      "status": "pending",
+      "mergedDefectIds": [
+        "35e04dd2-cb22-4672-9938-6a995ab3466f"
+      ],
+      "primaryDefectId": "35e04dd2-cb22-4672-9938-6a995ab3466f",
+      "centerX": 20.5,
+      "centerY": 30.5,
+      "level": "三级",
+      "ruleVersion": "1.0.0",
+      "sourceEvidence": [
+        {
+          "type": "defect",
+          "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+          "batchName": "defects_202606.json",
+          "recordId": "35e04dd2-cb22-4672-9938-6a995ab3466f",
+          "data": {
+            "id": "35e04dd2-cb22-4672-9938-6a995ab3466f",
+            "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+            "pointCode": "P-011",
+            "defectType": "loose_material",
+            "severity": "medium",
+            "description": "屋顶西北角发现较多松散防水材料",
+            "detectedAt": "2026-06-10T10:00:00Z",
+            "x": 20.5,
+            "y": 30.5
+          }
+        }
+      ],
+      "createdAt": "2026-06-15T17:02:12.053Z",
+      "updatedAt": "2026-06-15T17:02:12.053Z"
+    },
+    {
+      "id": "2e49a633-5294-4a77-9ff8-65dff32a7e4e",
+      "status": "pending",
+      "mergedDefectIds": [
+        "bbcbec19-e04e-4dae-98c4-a897d72dfab1"
+      ],
+      "primaryDefectId": "bbcbec19-e04e-4dae-98c4-a897d72dfab1",
+      "centerX": 22,
+      "centerY": 20.4,
+      "level": "四级",
+      "ruleVersion": "1.0.0",
+      "sourceEvidence": [
+        {
+          "type": "defect",
+          "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+          "batchName": "defects_202606.json",
+          "recordId": "bbcbec19-e04e-4dae-98c4-a897d72dfab1",
+          "data": {
+            "id": "bbcbec19-e04e-4dae-98c4-a897d72dfab1",
+            "batchId": "026d1294-e776-45bc-963b-dfc2d1dace22",
+            "pointCode": "P-005",
+            "defectType": "loose_material",
+            "severity": "minor",
+            "description": "屋顶东北角发现少量松散材料",
+            "detectedAt": "2026-06-10T09:45:00Z",
+            "x": 22,
+            "y": 20.4
+          }
+        }
+      ],
+      "createdAt": "2026-06-15T17:02:12.053Z",
+      "updatedAt": "2026-06-15T17:02:12.053Z"
+    }
+  ],
+  "operationLogs": [
+    {
+      "id": "c2574cc4-7216-446f-82f0-e730b6e53be7",
+      "eventId": "20d5d84c-3cc6-4ef2-8d13-1cd1d7a5ec06",
+      "operator": "张三",
+      "action": "add_remark",
+      "remark": "该缺陷为屋面卷材开裂，需立即处理",
+      "operatedAt": "2026-06-15T17:08:38.450Z"
+    },
+    {
+      "id": "ff93c6f4-4d15-47f0-9f0a-2d76724e0bd7",
+      "eventId": "20d5d84c-3cc6-4ef2-8d13-1cd1d7a5ec06",
+      "operator": "李四",
+      "action": "status_change",
+      "oldStatus": "pending",
+      "newStatus": "need_rectify",
+      "remark": "确认需要整改，安排施工队处理",
+      "operatedAt": "2026-06-15T17:10:55.627Z"
+    },
+    {
+      "id": "c5575ff7-5ec1-455a-8b4a-1354df7b477a",
+      "eventId": "20d5d84c-3cc6-4ef2-8d13-1cd1d7a5ec06",
+      "operator": "王五",
+      "action": "status_change",
+      "oldStatus": "need_rectify",
+      "newStatus": "reviewed",
+      "remark": "整改完成，质量合格",
+      "operatedAt": "2026-06-15T17:11:28.287Z"
+    },
+    {
+      "id": "ba8d47f9-0c13-4a3b-8192-b6a0df931c35",
+      "eventId": "20d5d84c-3cc6-4ef2-8d13-1cd1d7a5ec06",
+      "operator": "赵六",
+      "action": "status_change",
+      "oldStatus": "reviewed",
+      "newStatus": "closed",
+      "remark": "验证通过，关闭事件",
+      "operatedAt": "2026-06-15T17:11:57.077Z"
+    }
+  ],
+  "config": {
+    "id": "default",
+    "distanceThreshold": 5,
+    "levelMapping": [
+      {
+        "severity": "critical",
+        "level": "一级",
+        "color": "#ef4444"
+      },
+      {
+        "severity": "major",
+        "level": "二级",
+        "color": "#f59e0b"
+      },
+      {
+        "severity": "medium",
+        "level": "三级",
+        "color": "#10b981"
+      },
+      {
+        "severity": "minor",
+        "level": "四级",
+        "color": "#6366f1"
+      }
+    ],
+    "version": "1.0.0",
+    "updatedAt": "2026-06-15T16:59:55.628Z",
+    "updatedBy": "system"
+  }
+}

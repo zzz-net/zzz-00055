@@ -1,0 +1,24 @@
+[
+  {
+    "pointCode": "P-999",
+    "defectType": "crack",
+    "severity": "invalid_severity",
+    "description": "严重等级非法测试"
+  },
+  {
+    "pointCode": "NOT_EXISTS",
+    "defectType": "water_leakage",
+    "severity": "major",
+    "description": "点位不存在测试"
+  },
+  {
+    "defectType": "crack",
+    "severity": "minor",
+    "description": "缺失pointCode测试"
+  },
+  {
+    "pointCode": "P-001",
+    "severity": "major",
+    "description": "缺失defectType测试"
+  }
+]

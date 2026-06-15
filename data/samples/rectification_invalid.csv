@@ -1,0 +1,4 @@
+pointCode,eventId,rectificationMeasure,rectifier,rectifiedAt,remark
+,,缺失点位编号和整改措施,,
+P-001,,缺少整改人,张三,
+P-003,,整改措施为空,,2026-06-12T14:00:00Z,

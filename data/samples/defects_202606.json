@@ -1,0 +1,58 @@
+[
+  {
+    "pointCode": "P-001",
+    "defectType": "crack",
+    "severity": "major",
+    "description": "屋顶东南角发现长度约30cm的横向裂缝",
+    "detectedAt": "2026-06-10T09:30:00Z"
+  },
+  {
+    "pointCode": "P-002",
+    "defectType": "water_leakage",
+    "severity": "critical",
+    "description": "东南角相邻点位发现明显渗水痕迹",
+    "detectedAt": "2026-06-10T09:35:00Z"
+  },
+  {
+    "pointCode": "P-003",
+    "defectType": "crack",
+    "severity": "medium",
+    "description": "屋顶中部发现长度约15cm的纵向裂缝",
+    "detectedAt": "2026-06-10T09:40:00Z"
+  },
+  {
+    "pointCode": "P-005",
+    "defectType": "loose_material",
+    "severity": "minor",
+    "description": "屋顶东北角发现少量松散材料",
+    "detectedAt": "2026-06-10T09:45:00Z"
+  },
+  {
+    "pointCode": "P-007",
+    "defectType": "water_leakage",
+    "severity": "major",
+    "description": "屋顶中心发现渗水区域约0.5平方米",
+    "detectedAt": "2026-06-10T09:50:00Z"
+  },
+  {
+    "pointCode": "P-009",
+    "defectType": "crack",
+    "severity": "critical",
+    "description": "屋顶西南角发现长度约50cm的贯穿性裂缝",
+    "detectedAt": "2026-06-10T09:55:00Z"
+  },
+  {
+    "pointCode": "P-011",
+    "defectType": "loose_material",
+    "severity": "medium",
+    "description": "屋顶西北角发现较多松散防水材料",
+    "detectedAt": "2026-06-10T10:00:00Z"
+  },
+  {
+    "pointCode": "P-012",
+    "defectType": "crack",
+    "severity": "minor",
+    "description": "靠近P-001处发现微小裂纹",
+    "detectedAt": "2026-06-10T10:05:00Z"
+  }
+]
