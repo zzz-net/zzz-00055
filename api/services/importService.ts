@@ -1,9 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
-import path from 'path';
 import csvParser from 'csv-parser';
 import db, { saveDb } from '../models/db.js';
-import { Batch, Point, Defect, Rectification, BatchType, ValidationError } from '../../shared/types.js';
+import { Batch, Point, Defect, Rectification, ValidationError } from '../../shared/types.js';
 import { validatePointRow, validateDefectRow, validateRectificationRow, checkDuplicateBatch } from '../utils/validators.js';
 import { processAndSaveMergedDefects } from './defectMergeService.js';
 
@@ -43,14 +42,14 @@ export function parseJSONFile(filePath: string): Promise<any[]> {
 
 export async function importPoints(filePath: string, fileName: string): Promise<ImportResult> {
   await db.read();
-  
+
   if (checkDuplicateBatch(fileName, 'points')) {
     return {
       success: false,
       message: '相同名称的点位批次已存在，请勿重复导入',
     };
   }
-  
+
   const batchId = uuidv4();
   const batch: Batch = {
     id: batchId,
@@ -63,21 +62,35 @@ export async function importPoints(filePath: string, fileName: string): Promise<
     invalidRecords: 0,
     errors: [],
   };
-  
+
   db.data?.batches.push(batch);
-  
+
   try {
     const records = await parseCSVFile(filePath);
     batch.totalRecords = records.length;
-    
+
     const existingPointCodes = new Set<string>();
     db.data?.points.forEach(p => existingPointCodes.add(p.pointCode));
-    
+
     const validPoints: Point[] = [];
     const allErrors: ValidationError[] = [];
-    
+    const seenCodesInBatch = new Set<string>();
+
     records.forEach((record, index) => {
       const rowErrors = validatePointRow(record, index + 1, existingPointCodes);
+
+      const pointCode = String(record.pointCode || '').trim();
+      if (pointCode && seenCodesInBatch.has(pointCode)) {
+        rowErrors.push({
+          row: index + 1,
+          field: 'pointCode',
+          message: '本批次内点位编号重复',
+          value: record.pointCode,
+        });
+      } else if (pointCode) {
+        seenCodesInBatch.add(pointCode);
+      }
+
       if (rowErrors.length > 0) {
         allErrors.push(...rowErrors);
         batch.invalidRecords++;
@@ -85,7 +98,7 @@ export async function importPoints(filePath: string, fileName: string): Promise<
         const point: Point = {
           id: uuidv4(),
           batchId,
-          pointCode: String(record.pointCode).trim(),
+          pointCode,
           x: Number(record.x),
           y: Number(record.y),
           z: Number(record.z),
@@ -96,30 +109,59 @@ export async function importPoints(filePath: string, fileName: string): Promise<
         batch.validRecords++;
       }
     });
-    
-    if (validPoints.length > 0 && db.data) {
+
+    if (allErrors.length > 0) {
+      batch.status = 'failed';
+      batch.errorMessage = `导入失败：共 ${batch.invalidRecords} 条无效记录，请修正后重新导入`;
+      batch.errors = allErrors;
+      batch.validRecords = 0;
+      batch.invalidRecords = records.length;
+
+      const batchIndex = db.data!.batches.findIndex(b => b.id === batchId);
+      if (batchIndex !== -1) {
+        db.data!.batches[batchIndex] = { ...batch };
+      }
+
+      await saveDb();
+
+      return {
+        success: false,
+        batch,
+        errors: allErrors,
+        message: batch.errorMessage,
+      };
+    }
+
+    if (db.data) {
       db.data.points.push(...validPoints);
     }
-    
+
     batch.errors = allErrors;
-    batch.status = batch.invalidRecords === batch.totalRecords ? 'failed' : 'success';
-    batch.errorMessage = batch.invalidRecords > 0 ? `存在 ${batch.invalidRecords} 条无效记录` : undefined;
-    
+    batch.status = 'success';
+    batch.errorMessage = undefined;
+
     await saveDb();
-    
+
     return {
-      success: batch.status === 'success',
+      success: true,
       batch,
-      errors: allErrors,
+      errors: [],
     };
-    
+
   } catch (error: any) {
     batch.status = 'failed';
     batch.errorMessage = error.message;
+    batch.validRecords = 0;
+    batch.invalidRecords = batch.totalRecords;
+    const batchIndex = db.data!.batches.findIndex(b => b.id === batchId);
+    if (batchIndex !== -1) {
+      db.data!.batches[batchIndex] = { ...batch };
+    }
     await saveDb();
     return {
       success: false,
       message: `导入失败: ${error.message}`,
+      batch,
     };
   } finally {
     fs.promises.unlink(filePath).catch(() => {});
@@ -128,14 +170,14 @@ export async function importPoints(filePath: string, fileName: string): Promise<
 
 export async function importDefects(filePath: string, fileName: string): Promise<ImportResult> {
   await db.read();
-  
+
   if (checkDuplicateBatch(fileName, 'defects')) {
     return {
       success: false,
       message: '相同名称的缺陷批次已存在，请勿重复导入',
     };
   }
-  
+
   const batchId = uuidv4();
   const batch: Batch = {
     id: batchId,
@@ -148,19 +190,19 @@ export async function importDefects(filePath: string, fileName: string): Promise
     invalidRecords: 0,
     errors: [],
   };
-  
+
   db.data?.batches.push(batch);
-  
+
   try {
     const records = await parseJSONFile(filePath);
     batch.totalRecords = records.length;
-    
+
     const validPointCodes = new Set<string>();
     db.data?.points.forEach(p => validPointCodes.add(p.pointCode));
-    
+
     const validDefects: Defect[] = [];
     const allErrors: ValidationError[] = [];
-    
+
     records.forEach((record, index) => {
       const rowErrors = validateDefectRow(record, index + 1, validPointCodes);
       if (rowErrors.length > 0) {
@@ -181,34 +223,63 @@ export async function importDefects(filePath: string, fileName: string): Promise
         batch.validRecords++;
       }
     });
-    
+
+    if (allErrors.length > 0) {
+      batch.status = 'failed';
+      batch.errorMessage = `导入失败：共 ${batch.invalidRecords} 条无效记录，请修正后重新导入`;
+      batch.errors = allErrors;
+      batch.validRecords = 0;
+      batch.invalidRecords = records.length;
+
+      const batchIndex = db.data!.batches.findIndex(b => b.id === batchId);
+      if (batchIndex !== -1) {
+        db.data!.batches[batchIndex] = { ...batch };
+      }
+
+      await saveDb();
+
+      return {
+        success: false,
+        batch,
+        errors: allErrors,
+        message: batch.errorMessage,
+      };
+    }
+
     let newEvents = 0;
-    if (validDefects.length > 0 && db.data) {
+    if (db.data) {
       db.data.defects.push(...validDefects);
       const events = await processAndSaveMergedDefects();
       newEvents = events.length;
     }
-    
+
     batch.errors = allErrors;
-    batch.status = batch.invalidRecords === batch.totalRecords ? 'failed' : 'success';
-    batch.errorMessage = batch.invalidRecords > 0 ? `存在 ${batch.invalidRecords} 条无效记录` : undefined;
-    
+    batch.status = 'success';
+    batch.errorMessage = undefined;
+
     await saveDb();
-    
+
     return {
-      success: batch.status === 'success',
+      success: true,
       batch,
-      errors: allErrors,
+      errors: [],
       newEvents,
     };
-    
+
   } catch (error: any) {
     batch.status = 'failed';
     batch.errorMessage = error.message;
+    batch.validRecords = 0;
+    batch.invalidRecords = batch.totalRecords;
+    const batchIndex = db.data!.batches.findIndex(b => b.id === batchId);
+    if (batchIndex !== -1) {
+      db.data!.batches[batchIndex] = { ...batch };
+    }
     await saveDb();
     return {
       success: false,
       message: `导入失败: ${error.message}`,
+      batch,
     };
   } finally {
     fs.promises.unlink(filePath).catch(() => {});
@@ -217,14 +288,14 @@ export async function importDefects(filePath: string, fileName: string): Promise
 
 export async function importRectification(filePath: string, fileName: string): Promise<ImportResult> {
   await db.read();
-  
+
   if (checkDuplicateBatch(fileName, 'rectification')) {
     return {
       success: false,
       message: '相同名称的整改批次已存在，请勿重复导入',
     };
   }
-  
+
   const batchId = uuidv4();
   const batch: Batch = {
     id: batchId,
@@ -237,17 +308,17 @@ export async function importRectification(filePath: string, fileName: string): P
     invalidRecords: 0,
     errors: [],
   };
-  
+
   db.data?.batches.push(batch);
-  
+
   try {
     const records = await parseCSVFile(filePath);
     batch.totalRecords = records.length;
-    
+
     const validRectifications: Rectification[] = [];
     const allErrors: ValidationError[] = [];
     const updatedEventIds = new Set<string>();
-    
+
     records.forEach((record, index) => {
       const rowErrors = validateRectificationRow(record, index + 1);
       if (rowErrors.length > 0) {
@@ -265,7 +336,7 @@ export async function importRectification(filePath: string, fileName: string): P
             }
           }
         }
-        
+
         const rectification: Rectification = {
           id: uuidv4(),
           batchId,
@@ -278,16 +349,38 @@ export async function importRectification(filePath: string, fileName: string): P
         };
         validRectifications.push(rectification);
         batch.validRecords++;
-        
+
         if (eventId) {
           updatedEventIds.add(eventId);
         }
       }
     });
-    
-    if (validRectifications.length > 0 && db.data) {
+
+    if (allErrors.length > 0) {
+      batch.status = 'failed';
+      batch.errorMessage = `导入失败：共 ${batch.invalidRecords} 条无效记录，请修正后重新导入`;
+      batch.errors = allErrors;
+      batch.validRecords = 0;
+      batch.invalidRecords = records.length;
+
+      const batchIndex = db.data!.batches.findIndex(b => b.id === batchId);
+      if (batchIndex !== -1) {
+        db.data!.batches[batchIndex] = { ...batch };
+      }
+
+      await saveDb();
+
+      return {
+        success: false,
+        batch,
+        errors: allErrors,
+        message: batch.errorMessage,
+      };
+    }
+
+    if (db.data) {
       db.data.rectifications.push(...validRectifications);
-      
+
       for (const eventId of updatedEventIds) {
         const event = db.data.events.find(e => e.id === eventId);
         if (event) {
@@ -305,26 +398,33 @@ export async function importRectification(filePath: string, fileName: string): P
         }
       }
     }
-    
+
     batch.errors = allErrors;
-    batch.status = batch.invalidRecords === batch.totalRecords ? 'failed' : 'success';
-    batch.errorMessage = batch.invalidRecords > 0 ? `存在 ${batch.invalidRecords} 条无效记录` : undefined;
-    
+    batch.status = 'success';
+    batch.errorMessage = undefined;
+
     await saveDb();
-    
+
     return {
-      success: batch.status === 'success',
+      success: true,
       batch,
-      errors: allErrors,
+      errors: [],
     };
-    
+
   } catch (error: any) {
     batch.status = 'failed';
     batch.errorMessage = error.message;
+    batch.validRecords = 0;
+    batch.invalidRecords = batch.totalRecords;
+    const batchIndex = db.data!.batches.findIndex(b => b.id === batchId);
+    if (batchIndex !== -1) {
+      db.data!.batches[batchIndex] = { ...batch };
+    }
     await saveDb();
     return {
       success: false,
       message: `导入失败: ${error.message}`,
+      batch,
     };
   } finally {
     fs.promises.unlink(filePath).catch(() => {});

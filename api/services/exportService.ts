@@ -1,9 +1,9 @@
 import db from '../models/db.js';
-import { Event, Batch, Point, Defect, Rectification } from '../../shared/types.js';
+import { Event, OperationLog } from '../../shared/types.js';
 
 function toCSV(data: any[], headers: string[]): string {
   const headerRow = headers.join(',');
-  const dataRows = data.map(row => 
+  const dataRows = data.map(row =>
     headers.map(h => {
       const val = row[h];
       if (val === null || val === undefined) return '';
@@ -17,54 +17,115 @@ function toCSV(data: any[], headers: string[]): string {
   return [headerRow, ...dataRows].join('\n');
 }
 
-export function exportEventsCSV(batchId?: string): string {
-  let events = db.data?.events || [];
-  
+function getLastStatusChangeTime(eventId: string): string {
+  const logs = db.data?.operationLogs.filter(
+    (l: OperationLog) => l.eventId === eventId && l.action === 'status_change'
+  ) || [];
+  if (logs.length === 0) return '';
+  return logs.reduce(
+    (latest, log) => log.operatedAt > latest.operatedAt ? log : latest
+  ).operatedAt;
+}
+
+function getOperationLogCount(eventId: string): number {
+  return db.data?.operationLogs.filter((l: OperationLog) => l.eventId === eventId).length || 0;
+}
+
+function getSourceEvidenceSummary(event: Event): {
+  evidenceCount: number;
+  evidenceTypes: string;
+  evidenceBatchNames: string;
+  primaryDefectPointCode: string;
+} {
+  const evidence = event.sourceEvidence || [];
+  const evidenceCount = evidence.length;
+
+  const typeSet = new Set(evidence.map(e => e.type));
+  const evidenceTypes = Array.from(typeSet).join('|');
+
+  const batchNameSet = new Set(evidence.map(e => e.batchName));
+  const evidenceBatchNames = Array.from(batchNameSet).join('|');
+
+  const defectEvidence = evidence.find(e => e.type === 'defect' && e.recordId === event.primaryDefectId);
+  const primaryDefectPointCode = defectEvidence?.data?.pointCode || '';
+
+  return {
+    evidenceCount,
+    evidenceTypes,
+    evidenceBatchNames,
+    primaryDefectPointCode,
+  };
+}
+
+function getSortedEvents(batchId?: string): Event[] {
+  let events = [...(db.data?.events || [])];
+
   if (batchId) {
-    events = events.filter(e => 
+    events = events.filter(e =>
       e.sourceEvidence.some(ev => ev.batchId === batchId)
     );
   }
-  
-  const flattened = events.map(e => ({
-    id: e.id,
-    status: e.status,
-    level: e.level,
-    centerX: e.centerX,
-    centerY: e.centerY,
-    mergedDefectCount: e.mergedDefectIds.length,
-    primaryDefectId: e.primaryDefectId,
-    reviewer: e.reviewer || '',
-    reviewRemark: e.reviewRemark || '',
-    reviewedAt: e.reviewedAt || '',
-    closer: e.closer || '',
-    closedAt: e.closedAt || '',
-    ruleVersion: e.ruleVersion,
-    createdAt: e.createdAt,
-    updatedAt: e.updatedAt,
-  }));
-  
+
+  events.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+  return events;
+}
+
+export function exportEventsCSV(batchId?: string): string {
+  const events = getSortedEvents(batchId);
+  const config = db.data?.config;
+
+  const flattened = events.map(e => {
+    const evidenceSummary = getSourceEvidenceSummary(e);
+    const lastStatusChange = getLastStatusChangeTime(e.id);
+    const logCount = getOperationLogCount(e.id);
+
+    return {
+      id: e.id,
+      status: e.status,
+      level: e.level,
+      centerX: Number(e.centerX.toFixed(4)),
+      centerY: Number(e.centerY.toFixed(4)),
+      mergedDefectCount: e.mergedDefectIds.length,
+      primaryDefectId: e.primaryDefectId,
+      primaryDefectPointCode: evidenceSummary.primaryDefectPointCode,
+      reviewer: e.reviewer || '',
+      reviewRemark: e.reviewRemark || '',
+      reviewedAt: e.reviewedAt || '',
+      closer: e.closer || '',
+      closedAt: e.closedAt || '',
+      ruleVersion: e.ruleVersion,
+      currentRuleVersion: config?.version || '',
+      sourceEvidenceCount: evidenceSummary.evidenceCount,
+      sourceEvidenceTypes: evidenceSummary.evidenceTypes,
+      sourceEvidenceBatches: evidenceSummary.evidenceBatchNames,
+      operationLogCount: logCount,
+      lastStatusChangeAt: lastStatusChange,
+      createdAt: e.createdAt,
+      updatedAt: e.updatedAt,
+    };
+  });
+
   return toCSV(flattened, [
     'id', 'status', 'level', 'centerX', 'centerY', 'mergedDefectCount',
-    'primaryDefectId', 'reviewer', 'reviewRemark', 'reviewedAt',
-    'closer', 'closedAt', 'ruleVersion', 'createdAt', 'updatedAt'
+    'primaryDefectId', 'primaryDefectPointCode',
+    'reviewer', 'reviewRemark', 'reviewedAt',
+    'closer', 'closedAt',
+    'ruleVersion', 'currentRuleVersion',
+    'sourceEvidenceCount', 'sourceEvidenceTypes', 'sourceEvidenceBatches',
+    'operationLogCount', 'lastStatusChangeAt',
+    'createdAt', 'updatedAt'
   ]);
 }
 
 export function exportEventsJSON(batchId?: string): string {
-  let events = db.data?.events || [];
-  
-  if (batchId) {
-    events = events.filter(e => 
-      e.sourceEvidence.some(ev => ev.batchId === batchId)
-    );
-  }
-  
+  const events = getSortedEvents(batchId);
+
   const enriched = events.map(e => {
     const defects = db.data?.defects.filter(d => e.mergedDefectIds.includes(d.id)) || [];
     const rectifications = db.data?.rectifications.filter(r => r.eventId === e.id) || [];
     const logs = db.data?.operationLogs.filter(l => l.eventId === e.id) || [];
-    
+
     return {
       ...e,
       defects,
@@ -72,12 +133,18 @@ export function exportEventsJSON(batchId?: string): string {
       operationLogs: logs,
     };
   });
-  
-  return JSON.stringify(enriched, null, 2);
+
+  return JSON.stringify({
+    exportedAt: new Date().toISOString(),
+    eventCount: enriched.length,
+    currentRuleVersion: db.data?.config?.version || '',
+    events: enriched,
+  }, null, 2);
 }
 
 export function exportFullDataJSON(): string {
   return JSON.stringify({
+    exportedAt: new Date().toISOString(),
     batches: db.data?.batches || [],
     points: db.data?.points || [],
     defects: db.data?.defects || [],
@@ -85,6 +152,5 @@ export function exportFullDataJSON(): string {
     events: db.data?.events || [],
     operationLogs: db.data?.operationLogs || [],
     config: db.data?.config,
-    exportedAt: new Date().toISOString(),
   }, null, 2);
 }
