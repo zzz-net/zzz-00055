@@ -16,7 +16,7 @@
       "name": "defects_202606.json",
       "type": "defects",
       "status": "success",
-      "importedAt": "2026-06-15T17:02:12.050Z",
+      "importedAt": "2026-06-15T17:02:12.05Z",
       "totalRecords": 8,
       "validRecords": 8,
       "invalidRecords": 0,
@@ -591,7 +591,7 @@
       "operator": "张三",
       "action": "add_remark",
       "remark": "该缺陷为屋面卷材开裂，需立即处理",
-      "operatedAt": "2026-06-15T17:08:38.450Z"
+      "operatedAt": "2026-06-15T17:08:38.45Z"
     },
     {
       "id": "ff93c6f4-4d15-47f0-9f0a-2d76724e0bd7",

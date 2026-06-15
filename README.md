@@ -278,30 +278,199 @@ distance = sqrt((x2 - x1)² + (y2 - y1)²)
 
 ## API 接口
 
+所有接口前缀为 `/api`，返回 JSON（导出接口除外）。错误时返回 `{ success: false, error: '...' }` 或 `{ success: false, message: '...' }`，HTTP 状态码 4xx/5xx。
+
 ### 批次管理
-- `GET /api/batches` - 获取批次列表
-- `GET /api/batches/:id` - 获取批次详情
+
+#### GET /api/batches
+获取批次列表，按创建时间倒序。
+
+**Query 参数：** 无
+
+**返回示例：**
+```json
+[
+  {
+    "id": "uuid",
+    "name": "roof_points_202606",
+    "type": "points",
+    "status": "success",
+    "validRecords": 12,
+    "invalidRecords": 0,
+    "createdAt": "2026-06-16T08:00:00.000Z"
+  }
+]
+```
+
+#### GET /api/batches/:id
+获取单个批次详情。
+
+**Path 参数：**
+- `id` - 批次 ID
+
+**返回示例：** 同上单个对象；不存在时返回 `404 { "message": "批次不存在" }`。
+
+---
 
 ### 数据导入
-- `POST /api/import/points` - 导入点位 CSV
-- `POST /api/import/defects` - 导入缺陷 JSON
-- `POST /api/import/rectification` - 导入整改回传 CSV
+
+三类导入均使用 `multipart/form-data`，字段名 `file`。
+
+#### POST /api/import/points
+导入点位 CSV。
+
+#### POST /api/import/defects
+导入缺陷 JSON，导入完成后自动触发缺陷合并生成事件。
+
+#### POST /api/import/rectification
+导入整改回传 CSV。
+
+**成功返回：**
+```json
+{
+  "success": true,
+  "batch": { "id": "...", "name": "...", "status": "success", "validRecords": 12 },
+  "newEvents": 3
+}
+```
+`newEvents` 仅缺陷导入返回。
+
+**失败返回（整批回滚，不写入任何数据）：**
+```json
+{
+  "success": false,
+  "batch": { "id": "...", "status": "failed", "errors": [...] },
+  "errors": [
+    { "row": 3, "field": "pointCode", "message": "点位编号不能为空" },
+    { "row": 4, "field": "xCoord", "message": "坐标 X 必须是有效的数字" }
+  ],
+  "message": "导入失败：共 2 条无效记录"
+}
+```
+
+---
 
 ### 事件管理
-- `GET /api/events` - 获取事件列表
-- `GET /api/events/:id` - 获取事件详情
-- `PATCH /api/events/:id/status` - 更新事件状态
-- `POST /api/events/:id/remark` - 添加复核备注
+
+#### GET /api/events
+获取事件列表。
+
+**Query 参数：**
+- `status` (可选) - 按状态过滤：`pending` \| `confirmed` \| `closed`
+- `batchId` (可选) - 按来源批次过滤
+
+#### GET /api/events/:id
+获取事件详情（含关联缺陷、整改、操作日志）。
+
+#### PATCH /api/events/:id/status
+更新事件状态（含状态流转日志）。
+
+**Body：**
+```json
+{
+  "newStatus": "confirmed",
+  "operator": "张三",
+  "remark": "现场复核确认"
+}
+```
+
+#### PATCH /api/events/:id/remark
+添加复核备注。
+
+**Body：**
+```json
+{
+  "remark": "该缺陷已通知施工队处理",
+  "reviewer": "李四"
+}
+```
+
+**成功返回：**
+```json
+{
+  "success": true,
+  "event": { "id": "...", "status": "confirmed", "reviewRemark": "...", ... }
+}
+```
+
+---
 
 ### 配置管理
-- `GET /api/config` - 获取配置
-- `PUT /api/config` - 更新配置
-- `POST /api/config/reset` - 重置为默认配置
+
+#### GET /api/config
+获取当前配置。
+
+#### PUT /api/config
+更新配置（距离阈值、等级映射等）。保存后自动触发全量事件重算。
+
+**Body：**
+```json
+{
+  "distanceThreshold": 5.0,
+  "levelMapping": [
+    { "severity": "Critical", "level": "严重", "color": "#ef4444" }
+  ]
+}
+```
+
+**成功返回：**
+```json
+{
+  "success": true,
+  "config": { "version": "1.0.1", "distanceThreshold": 5.0, ... },
+  "recalculated": {
+    "previousEventCount": 6,
+    "newEventCount": 5,
+    "preservedStatusCount": 2
+  }
+}
+```
+
+#### POST /api/config/reset
+重置为默认配置，同样触发全量重算。
+
+---
 
 ### 数据导出
-- `GET /api/export/events.csv` - 导出事件 CSV
-- `GET /api/export/events.json` - 导出事件 JSON
-- `GET /api/export/full.json` - 导出完整数据库备份
+
+三条导出接口均为 GET，直接在浏览器访问会触发下载。
+
+#### GET /api/export/events/csv
+导出事件 CSV，包含追溯字段（来源证据、操作日志数量、规则版本、最后状态变更时间等）。
+
+**Query 参数：**
+- `batchId` (可选) - 只导出该批次相关事件
+
+**响应：** `Content-Type: text/csv; charset=utf-8`，带 BOM，Excel 可直接打开。
+
+#### GET /api/export/events/json
+导出事件 JSON，内嵌关联缺陷、整改、操作日志。与 CSV 按创建时间升序一一对应。
+
+**Query 参数：**
+- `batchId` (可选) - 只导出该批次相关事件
+
+**响应结构：**
+```json
+{
+  "exportedAt": "2026-06-16T08:30:00.000Z",
+  "eventCount": 5,
+  "currentRuleVersion": "1.0.1",
+  "events": [
+    {
+      "id": "...",
+      "status": "pending",
+      "level": "严重",
+      "ruleVersion": "1.0.1",
+      "defects": [ ... ],
+      "rectifications": [ ... ],
+      "operationLogs": [ ... ]
+    }
+  ]
+}
+```
+
+#### GET /api/export/full/json
+导出完整数据库备份（批次、点位、缺陷、整改、事件、操作日志、配置）。
 
 ---
 
@@ -339,6 +508,32 @@ A: 本项目为本地演示用途，如需生产环境使用，请考虑：
 - 添加用户认证和权限管理
 - 增加数据备份机制
 - 部署到安全的服务器环境
+
+---
+
+## 回归测试
+
+项目内置了完整的回归测试套件，覆盖导入、改配置、重启、再导出、非法混入、重复导入等核心场景。
+
+### 运行测试
+
+```bash
+npm test
+```
+
+### 测试覆盖范围
+
+| 测试套件 | 测试用例数 | 说明 |
+|----------|-----------|------|
+| 数据导入 - 成功路径 | 3 | 点位、缺陷、整改三类数据导入成功 |
+| 重复导入校验 | 4 | 三类数据各自的重复导入都应失败 |
+| 非法数据导入 - 整批失败不留脏数据 | 3 | 非法数据整批失败，不写入任何记录 |
+| 规则切换立即生效 | 4 | 阈值增大/减小、等级映射修改都立即生效 |
+| 数据导出增强 | 3 | CSV字段完整、JSON结构完整、两者一一对应 |
+| 重启持久化验证 | 2 | 模拟重启后数据和配置保持一致 |
+| 改配置后再导出 | 1 | 配置修改后导出使用新规则 |
+
+**共 20 个测试用例，全部通过。**
 
 ---
 
