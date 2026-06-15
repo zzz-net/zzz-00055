@@ -487,6 +487,216 @@ describe('API 路由一致性测试（文档 vs 实际路由）', () => {
     });
   });
 
+  describe('4.7 README 文档状态枚举一致性验证', () => {
+    let pendingEventId1: string;
+    let pendingEventId2: string;
+    let pendingEventId3: string;
+
+    async function getPendingEventId(): Promise<string> {
+      const res = await httpRequest(HOST, PORT, '/api/events?status=pending', 'GET');
+      const events = JSON.parse(res.body);
+      assert.ok(events.length > 0, '应有 pending 状态的事件');
+      return events[0].id;
+    }
+
+    async function getNeedRectifyEventId(): Promise<string> {
+      const res = await httpRequest(HOST, PORT, '/api/events?status=need_rectify', 'GET');
+      const events = JSON.parse(res.body);
+      if (events.length > 0) return events[0].id;
+
+      const evId = await getPendingEventId();
+      await httpRequest(
+        HOST, PORT, `/api/events/${evId}/status`,
+        'PATCH',
+        JSON.stringify({ newStatus: 'need_rectify', operator: 'TestPrep' }),
+        'application/json'
+      );
+      return evId;
+    }
+
+    async function getReviewedEventId(): Promise<string> {
+      const res = await httpRequest(HOST, PORT, '/api/events?status=reviewed', 'GET');
+      const events = JSON.parse(res.body);
+      if (events.length > 0) return events[0].id;
+
+      const evId = await getNeedRectifyEventId();
+      await httpRequest(
+        HOST, PORT, `/api/events/${evId}/status`,
+        'PATCH',
+        JSON.stringify({ newStatus: 'reviewed', operator: 'TestPrep' }),
+        'application/json'
+      );
+      return evId;
+    }
+
+    before(async () => {
+      const dbModule = await import('../api/models/db.js');
+      const db = dbModule.db;
+      const saveDb = dbModule.saveDb;
+      await db.read();
+      db.data.batches = [];
+      db.data.points = [];
+      db.data.defects = [];
+      db.data.rectifications = [];
+      db.data.events = [];
+      db.data.operationLogs = [];
+      await saveDb();
+
+      const pointsFile = copySample('roof_points_202606.csv');
+      await httpUpload(HOST, PORT, '/api/import/points', 'file', pointsFile);
+
+      const defectsFile = copySample('defects_202606.json');
+      await httpUpload(HOST, PORT, '/api/import/defects', 'file', defectsFile);
+
+      const res = await httpRequest(HOST, PORT, '/api/events', 'GET');
+      const events = JSON.parse(res.body);
+      assert.ok(events.length >= 5, '测试需要至少 5 个事件');
+      pendingEventId1 = events[0].id;
+      pendingEventId2 = events[1].id;
+      pendingEventId3 = events[2].id;
+    });
+
+    it('README 列出的 5 个状态枚举都能作为筛选参数', async () => {
+      const statuses = ['pending', 'need_rectify', 'reviewed', 'closed', 'cancelled'];
+      for (const s of statuses) {
+        const res = await httpRequest(HOST, PORT, `/api/events?status=${s}`, 'GET');
+        assert.equal(res.status, 200, `状态 ${s} 作为筛选参数不应报错`);
+        const events = JSON.parse(res.body);
+        for (const ev of events) {
+          assert.equal(ev.status, s, `筛选 ${s} 的结果状态应为 ${s}`);
+        }
+      }
+    });
+
+    it('按文档示例 pending → need_rectify 流转成功（与 README Body 示例一致）', async () => {
+      const body = JSON.stringify({
+        newStatus: 'need_rectify',
+        operator: '张三',
+        remark: '现场确认需要整改',
+      });
+
+      const res = await httpRequest(
+        HOST, PORT, `/api/events/${pendingEventId1}/status`,
+        'PATCH', body, 'application/json'
+      );
+
+      assert.equal(res.status, 200, '按 README 示例调用 pending→need_rectify 应成功');
+      const data = JSON.parse(res.body);
+      assert.equal(data.success, true);
+      assert.equal(data.event.status, 'need_rectify', '返回的 status 应与文档示例一致');
+    });
+
+    it('need_rectify → reviewed 流转成功（二级流转）', async () => {
+      const evId = await getNeedRectifyEventId();
+
+      const res = await httpRequest(
+        HOST, PORT, `/api/events/${evId}/status`,
+        'PATCH',
+        JSON.stringify({ newStatus: 'reviewed', operator: '李四' }),
+        'application/json'
+      );
+
+      assert.equal(res.status, 200);
+      const data = JSON.parse(res.body);
+      assert.equal(data.event.status, 'reviewed');
+    });
+
+    it('reviewed → closed 流转成功（最终关闭）', async () => {
+      const evId = await getReviewedEventId();
+
+      const res = await httpRequest(
+        HOST, PORT, `/api/events/${evId}/status`,
+        'PATCH',
+        JSON.stringify({ newStatus: 'closed', operator: '王五', remark: '验证通过关闭' }),
+        'application/json'
+      );
+
+      assert.equal(res.status, 200);
+      const data = JSON.parse(res.body);
+      assert.equal(data.event.status, 'closed');
+    });
+
+    it('文档里不存在的 confirmed 状态返回 400（复现历史问题）', async () => {
+      const body = JSON.stringify({
+        newStatus: 'confirmed',
+        operator: '测试员',
+        remark: '旧文档错误值',
+      });
+
+      const res = await httpRequest(
+        HOST, PORT, `/api/events/${pendingEventId2}/status`,
+        'PATCH', body, 'application/json'
+      );
+
+      assert.equal(res.status, 400, 'confirmed 是无效状态值，应返回 400');
+      const data = JSON.parse(res.body);
+      assert.equal(data.success, false);
+    });
+
+    it('非法流转 pending → closed 返回 400（与文档失败返回示例一致）', async () => {
+      const res = await httpRequest(
+        HOST, PORT, `/api/events/${pendingEventId3}/status`,
+        'PATCH',
+        JSON.stringify({ newStatus: 'closed', operator: '测试员' }),
+        'application/json'
+      );
+
+      assert.equal(res.status, 400, 'pending 不能直接到 closed');
+      const data = JSON.parse(res.body);
+      assert.equal(data.success, false);
+      assert.ok(data.message.includes('无法从') || data.message.includes('不允许'),
+        '错误信息应与文档示例一致');
+    });
+
+    it('README 同页验证步骤：按文档完整走一遍状态流转', async () => {
+      const freshId = await getPendingEventId();
+
+      const r2 = await httpRequest(
+        HOST, PORT, `/api/events/${freshId}/status`,
+        'PATCH',
+        JSON.stringify({
+          newStatus: 'need_rectify',
+          operator: '张三',
+          remark: '现场确认需要整改',
+        }),
+        'application/json'
+      );
+      assert.equal(r2.status, 200);
+      assert.equal(JSON.parse(r2.body).event.status, 'need_rectify');
+
+      const r3 = await httpRequest(
+        HOST, PORT, `/api/events/${freshId}/status`,
+        'PATCH',
+        JSON.stringify({
+          newStatus: 'reviewed',
+          operator: '李四',
+          remark: '复核通过',
+        }),
+        'application/json'
+      );
+      assert.equal(r3.status, 200);
+      assert.equal(JSON.parse(r3.body).event.status, 'reviewed');
+
+      const r4 = await httpRequest(
+        HOST, PORT, `/api/events/${freshId}/status`,
+        'PATCH',
+        JSON.stringify({
+          newStatus: 'closed',
+          operator: '王五',
+          remark: '验证通过关闭',
+        }),
+        'application/json'
+      );
+      assert.equal(r4.status, 200);
+      assert.equal(JSON.parse(r4.body).event.status, 'closed');
+
+      const r5 = await httpRequest(HOST, PORT, `/api/events/${freshId}`, 'GET');
+      const detail = JSON.parse(r5.body);
+      assert.equal(detail.event.status, 'closed');
+      assert.ok(detail.logs.length >= 3, '至少有 3 条状态流转日志');
+    });
+  });
+
   describe('5. README 验证步骤完整复现（从头跑通）', () => {
     before(async () => {
       const dbModule = await import('../api/models/db.js');

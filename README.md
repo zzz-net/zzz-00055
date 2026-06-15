@@ -365,12 +365,45 @@ distance = sqrt((x2 - x1)² + (y2 - y1)²)
 #### PATCH /api/events/:id/status
 更新事件状态（含状态流转日志）。
 
+**状态流转图：**
+```
+pending (待确认)
+  ├─→ need_rectify (需整改)
+  └─→ cancelled (已作废)
+
+need_rectify (需整改)
+  └─→ reviewed (已复核)
+
+reviewed (已复核)
+  ├─→ closed (已关闭)
+  └─→ need_rectify (需整改)  [整改不通过，打回]
+
+closed (已关闭)
+  └─→ need_rectify (需整改)  [重新打开]
+```
+
 **Body：**
 ```json
 {
-  "newStatus": "confirmed",
+  "newStatus": "need_rectify",
   "operator": "张三",
-  "remark": "现场复核确认"
+  "remark": "现场确认需要整改"
+}
+```
+
+**成功返回：**
+```json
+{
+  "success": true,
+  "event": { "id": "...", "status": "need_rectify", ... }
+}
+```
+
+**失败返回（状态不合法或流转不允许）：**
+```json
+{
+  "success": false,
+  "message": "不允许从 pending 直接流转到 closed"
 }
 ```
 
@@ -389,7 +422,7 @@ distance = sqrt((x2 - x1)² + (y2 - y1)²)
 ```json
 {
   "success": true,
-  "event": { "id": "...", "status": "confirmed", "reviewRemark": "...", ... }
+  "event": { "id": "...", "status": "pending", "reviewRemark": "...", ... }
 }
 ```
 
@@ -513,7 +546,7 @@ A: 本项目为本地演示用途，如需生产环境使用，请考虑：
 
 ## 回归测试
 
-项目内置了两套回归测试，共 **35 个测试用例全部通过**。
+项目内置了两套回归测试，共 **45 个测试用例全部通过**。
 
 ### 运行测试
 
@@ -547,10 +580,12 @@ npm test
 | 导出接口 - 错误路径 | 3 | events.csv/events.json/full.json 旧错误路径全部返回 404 |
 | 备注接口 - 正确方法与路径 | 2 | PATCH 添加备注成功，GET 详情能查到备注 |
 | 备注接口 - 错误方法 | 1 | POST 方法访问 remark 接口返回 404 |
+| 状态接口 - 正确状态值与筛选 | 6 | 初始状态、状态筛选、两级流转、操作日志验证 |
+| 状态接口 - 错误状态值与非法流转 | 4 | confirmed 无效值失败、非法流转失败、失败不脏改原状态 |
 | README 验证步骤完整复现 | 1 | 从头跑通导入→查看→加备注→改配置→导出全流程 |
 | 错误路径与方法综合验证 | 4 | 不存在路径、错误方法、不存在事件等边界场景 |
 
-**共 15 个用例。**
+**共 25 个用例。**
 
 ---
 
