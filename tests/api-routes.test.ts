@@ -348,6 +348,145 @@ describe('API 路由一致性测试（文档 vs 实际路由）', () => {
     });
   });
 
+  describe('4.5 状态接口 - 正确状态值与筛选', () => {
+    let eventId: string;
+
+    before(async () => {
+      const res = await httpRequest(HOST, PORT, '/api/events', 'GET');
+      const events = JSON.parse(res.body);
+      eventId = events[0].id;
+    });
+
+    it('初始状态为 pending（待确认）', async () => {
+      const res = await httpRequest(HOST, PORT, `/api/events/${eventId}`, 'GET');
+      const data = JSON.parse(res.body);
+      assert.equal(data.event.status, 'pending', '新生成的事件初始状态应为 pending');
+    });
+
+    it('GET /api/events?status=pending 能筛选出待确认事件', async () => {
+      const res = await httpRequest(HOST, PORT, '/api/events?status=pending', 'GET');
+      assert.equal(res.status, 200);
+      const events = JSON.parse(res.body);
+      assert.ok(events.length > 0, 'pending 状态应有事件');
+      for (const ev of events) {
+        assert.equal(ev.status, 'pending');
+      }
+    });
+
+    it('GET /api/events?status=need_rectify 筛选需整改（初始应为 0）', async () => {
+      const res = await httpRequest(HOST, PORT, '/api/events?status=need_rectify', 'GET');
+      assert.equal(res.status, 200);
+      const events = JSON.parse(res.body);
+      assert.equal(events.length, 0, '初始时 need_rectify 状态应有 0 个事件');
+    });
+
+    it('PATCH /api/events/:id/status pending → need_rectify 成功', async () => {
+      const body = JSON.stringify({
+        newStatus: 'need_rectify',
+        operator: '测试员C',
+        remark: '确认需要整改',
+      });
+
+      const res = await httpRequest(
+        HOST, PORT, `/api/events/${eventId}/status`,
+        'PATCH', body, 'application/json'
+      );
+
+      assert.equal(res.status, 200);
+      const data = JSON.parse(res.body);
+      assert.equal(data.success, true);
+      assert.equal(data.event.status, 'need_rectify', '状态应更新为 need_rectify');
+    });
+
+    it('状态更新后产生操作日志', async () => {
+      const res = await httpRequest(HOST, PORT, `/api/events/${eventId}`, 'GET');
+      const data = JSON.parse(res.body);
+      assert.ok(data.logs.length > 0, '状态更新后应有操作日志');
+      const lastLog = data.logs[data.logs.length - 1];
+      assert.equal(lastLog.oldStatus, 'pending');
+      assert.equal(lastLog.newStatus, 'need_rectify');
+      assert.equal(lastLog.operator, '测试员C');
+    });
+
+    it('need_rectify → reviewed 成功（二级流转）', async () => {
+      const body = JSON.stringify({
+        newStatus: 'reviewed',
+        operator: '测试员D',
+        remark: '复核通过',
+      });
+
+      const res = await httpRequest(
+        HOST, PORT, `/api/events/${eventId}/status`,
+        'PATCH', body, 'application/json'
+      );
+
+      assert.equal(res.status, 200);
+      const data = JSON.parse(res.body);
+      assert.equal(data.success, true);
+      assert.equal(data.event.status, 'reviewed');
+    });
+  });
+
+  describe('4.6 状态接口 - 错误状态值与非法流转', () => {
+    let eventId: string;
+
+    before(async () => {
+      const res = await httpRequest(HOST, PORT, '/api/events?status=pending', 'GET');
+      const events = JSON.parse(res.body);
+      assert.ok(events.length > 0, '应有 pending 状态的事件用于测试');
+      eventId = events[0].id;
+    });
+
+    it('错误状态值 confirmed 返回失败（README 旧错写值）', async () => {
+      const body = JSON.stringify({
+        newStatus: 'confirmed',
+        operator: '测试员E',
+        remark: '旧错写状态值',
+      });
+
+      const res = await httpRequest(
+        HOST, PORT, `/api/events/${eventId}/status`,
+        'PATCH', body, 'application/json'
+      );
+
+      assert.equal(res.status, 400, 'confirmed 是无效状态值，应返回 400');
+      const data = JSON.parse(res.body);
+      assert.equal(data.success, false);
+      assert.ok(data.message || data.error, '应有错误描述');
+    });
+
+    it('非法状态流转 pending → closed 返回失败', async () => {
+      const body = JSON.stringify({
+        newStatus: 'closed',
+        operator: '测试员F',
+        remark: '跳过中间状态',
+      });
+
+      const res = await httpRequest(
+        HOST, PORT, `/api/events/${eventId}/status`,
+        'PATCH', body, 'application/json'
+      );
+
+      assert.equal(res.status, 400, 'pending 不能直接到 closed，应返回 400');
+      const data = JSON.parse(res.body);
+      assert.equal(data.success, false);
+      assert.ok(data.message, '应有错误描述');
+    });
+
+    it('GET /api/events?status=confirmed 返回 200 但结果为空（无效枚举值不会报错，只返回空）', async () => {
+      const res = await httpRequest(HOST, PORT, '/api/events?status=confirmed', 'GET');
+      assert.equal(res.status, 200, '筛选接口不校验枚举合法性，无效值返回空数组');
+      const events = JSON.parse(res.body);
+      assert.equal(events.length, 0, 'confirmed 是无效状态，结果应为空');
+    });
+
+    it('状态更新后事件状态没有被脏改', async () => {
+      const res = await httpRequest(HOST, PORT, `/api/events/${eventId}`, 'GET');
+      const data = JSON.parse(res.body);
+      assert.equal(data.event.status, 'pending', '失败的状态更新不应改变原状态');
+    });
+  });
+
   describe('5. README 验证步骤完整复现（从头跑通）', () => {
     before(async () => {
       const dbModule = await import('../api/models/db.js');
