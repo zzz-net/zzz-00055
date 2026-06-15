@@ -1,7 +1,13 @@
 import { Router } from 'express';
-import { exportEventsCSV, exportEventsJSON, exportFullDataJSON } from '../services/exportService.js';
+import { exportEventsCSV, exportEventsJSON, exportFullDataJSON, getExportSummary } from '../services/exportService.js';
 
 const router = Router();
+
+router.get('/summary', (req, res) => {
+  const { batchId } = req.query;
+  const summary = getExportSummary(batchId as string | undefined);
+  res.json(summary);
+});
 
 router.get('/events/csv', (req, res) => {
   const { batchId } = req.query;

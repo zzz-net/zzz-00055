@@ -1,17 +1,19 @@
 import { create } from 'zustand';
-import { Batch, Event, Config, EventStatus } from '../../shared/types';
+import { Batch, Event, Config, EventStatus, ConfigHistory } from '../../shared/types';
 import { api } from '../api/client';
 
 interface AppState {
   batches: Batch[];
   events: Event[];
   config: Config | null;
+  configHistory: ConfigHistory[];
   loading: Record<string, boolean>;
   error: string | null;
   
   loadBatches: () => Promise<void>;
   loadEvents: (params?: { status?: EventStatus; batchId?: string }) => Promise<void>;
   loadConfig: () => Promise<void>;
+  loadConfigHistory: (limit?: number) => Promise<void>;
   loadAll: () => Promise<void>;
   
   setLoading: (key: string, value: boolean) => void;
@@ -20,12 +22,14 @@ interface AppState {
   addBatch: (batch: Batch) => void;
   updateEvent: (event: Event) => void;
   updateConfig: (config: Config) => void;
+  setConfigHistory: (history: ConfigHistory[]) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
   batches: [],
   events: [],
   config: null,
+  configHistory: [],
   loading: {},
   error: null,
   
@@ -65,11 +69,24 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
   
+  loadConfigHistory: async (limit?: number) => {
+    set({ loading: { ...get().loading, configHistory: true } });
+    try {
+      const history = await api.config.getHistory(limit);
+      set({ configHistory: history });
+    } catch (e: any) {
+      set({ error: e.message });
+    } finally {
+      set({ loading: { ...get().loading, configHistory: false } });
+    }
+  },
+  
   loadAll: async () => {
     await Promise.all([
       get().loadBatches(),
       get().loadEvents(),
       get().loadConfig(),
+      get().loadConfigHistory(),
     ]);
   },
   
@@ -91,5 +108,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   
   updateConfig: (config) => {
     set({ config });
+  },
+  
+  setConfigHistory: (history) => {
+    set({ configHistory: history });
   },
 }));

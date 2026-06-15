@@ -94,6 +94,24 @@ export interface OperationLog {
   operatedAt: string;
 }
 
+export type ConfigHistoryAction = 'save' | 'reset';
+
+export interface ConfigHistory {
+  id: string;
+  version: string;
+  action: ConfigHistoryAction;
+  operator: string;
+  operatedAt: string;
+  distanceThreshold: {
+    before: number;
+    after: number;
+  };
+  levelMapping: {
+    before: LevelMappingItem[];
+    after: LevelMappingItem[];
+  };
+}
+
 export interface Config {
   id: string;
   distanceThreshold: number;
@@ -117,6 +135,7 @@ export interface Database {
   events: Event[];
   operationLogs: OperationLog[];
   config: Config;
+  configHistory: ConfigHistory[];
 }
 
 export const STATUS_LABELS: Record<EventStatus, string> = {
@@ -139,6 +158,19 @@ export interface EventDetailResponse {
   defects: Defect[];
   rectifications: Rectification[];
   logs: OperationLog[];
+}
+
+export interface ExportSummary {
+  exportedAt: string;
+  ruleVersion: string;
+  batchFilter: {
+    applied: boolean;
+    batchId?: string;
+    batchName?: string;
+  };
+  eventCount: number;
+  statusCounts: Record<string, number>;
+  levelCounts: Record<string, number>;
 }
 
 export const DEFAULT_CONFIG: Config = {

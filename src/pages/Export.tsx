@@ -1,18 +1,37 @@
 import { useState, useEffect } from 'react';
-import { Download, FileSpreadsheet, FileJson, Database } from 'lucide-react';
+import { Download, FileSpreadsheet, FileJson, Database, Info, Filter } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { api } from '../api/client';
 import { useToast } from '../components/common/Toast';
+import { ExportSummary } from '../../shared/types';
 
 export function Export() {
   const { addToast } = useToast();
-  const { batches, events, loadBatches, loadEvents, loading } = useAppStore();
+  const { batches, events, loadBatches, loadEvents, loading, config } = useAppStore();
   const [selectedBatch, setSelectedBatch] = useState<string>('');
+  const [exportSummary, setExportSummary] = useState<ExportSummary | null>(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
 
   useEffect(() => {
     loadBatches();
     loadEvents();
   }, [loadBatches, loadEvents]);
+
+  useEffect(() => {
+    const loadSummary = async () => {
+      setLoadingSummary(true);
+      try {
+        const summary = await api.export.getSummary(selectedBatch || undefined);
+        setExportSummary(summary);
+      } catch (e: any) {
+        console.error('Failed to load export summary:', e);
+      } finally {
+        setLoadingSummary(false);
+      }
+    };
+
+    loadSummary();
+  }, [selectedBatch, events.length]);
 
   const filteredEvents = selectedBatch
     ? events.filter(e => e.sourceEvidence.some(ev => ev.batchId === selectedBatch))
@@ -62,6 +81,50 @@ export function Export() {
           <p className="text-slate-400 text-sm">已关闭</p>
           <p className="text-3xl font-bold text-green-400 font-mono mt-1">{statusCounts.closed || 0}</p>
         </div>
+      </div>
+
+      <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Info size={20} className="text-primary-400" />
+          <h2 className="text-lg font-semibold text-white">导出摘要</h2>
+        </div>
+        
+        {loadingSummary ? (
+          <div className="animate-pulse h-24 bg-slate-900 rounded" />
+        ) : exportSummary ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-slate-900 rounded-lg p-4">
+              <p className="text-slate-400 text-sm mb-1">规则版本</p>
+              <p className="text-xl font-bold text-primary-400 font-mono">v{exportSummary.ruleVersion}</p>
+            </div>
+            <div className="bg-slate-900 rounded-lg p-4">
+              <p className="text-slate-400 text-sm mb-1">批次筛选</p>
+              {exportSummary.batchFilter.applied ? (
+                <div className="flex items-center gap-1">
+                  <Filter size={14} className="text-amber-400" />
+                  <span className="text-amber-400 text-sm font-medium">已筛选</span>
+                </div>
+              ) : (
+                <span className="text-green-400 text-sm font-medium">全部批次</span>
+              )}
+              {exportSummary.batchFilter.batchName && (
+                <p className="text-xs text-slate-500 mt-1 truncate">
+                  {exportSummary.batchFilter.batchName}
+                </p>
+              )}
+            </div>
+            <div className="bg-slate-900 rounded-lg p-4">
+              <p className="text-slate-400 text-sm mb-1">包含事件</p>
+              <p className="text-xl font-bold text-white font-mono">{exportSummary.eventCount} 条</p>
+            </div>
+            <div className="bg-slate-900 rounded-lg p-4">
+              <p className="text-slate-400 text-sm mb-1">导出时间</p>
+              <p className="text-sm text-slate-300">
+                {new Date(exportSummary.exportedAt).toLocaleString('zh-CN')}
+              </p>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">

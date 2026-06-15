@@ -1,5 +1,5 @@
 import db from '../models/db.js';
-import { Event, OperationLog } from '../../shared/types.js';
+import { Event, OperationLog, ConfigHistory, ExportSummary } from '../../shared/types.js';
 
 function toCSV(data: any[], headers: string[]): string {
   const headerRow = headers.join(',');
@@ -71,6 +71,35 @@ function getSortedEvents(batchId?: string): Event[] {
   return events;
 }
 
+export function getExportSummary(batchId?: string): ExportSummary {
+  const events = getSortedEvents(batchId);
+  const config = db.data?.config;
+  const batch = batchId ? db.data?.batches.find(b => b.id === batchId) : undefined;
+
+  const statusCounts = events.reduce((acc, e) => {
+    acc[e.status] = (acc[e.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const levelCounts = events.reduce((acc, e) => {
+    acc[e.level] = (acc[e.level] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  return {
+    exportedAt: new Date().toISOString(),
+    ruleVersion: config?.version || '',
+    batchFilter: {
+      applied: !!batchId,
+      batchId: batchId || undefined,
+      batchName: batch?.name || undefined,
+    },
+    eventCount: events.length,
+    statusCounts,
+    levelCounts,
+  };
+}
+
 export function exportEventsCSV(batchId?: string): string {
   const events = getSortedEvents(batchId);
   const config = db.data?.config;
@@ -120,6 +149,7 @@ export function exportEventsCSV(batchId?: string): string {
 
 export function exportEventsJSON(batchId?: string): string {
   const events = getSortedEvents(batchId);
+  const summary = getExportSummary(batchId);
 
   const enriched = events.map(e => {
     const defects = db.data?.defects.filter(d => e.mergedDefectIds.includes(d.id)) || [];
@@ -135,16 +165,20 @@ export function exportEventsJSON(batchId?: string): string {
   });
 
   return JSON.stringify({
-    exportedAt: new Date().toISOString(),
+    exportedAt: summary.exportedAt,
     eventCount: enriched.length,
-    currentRuleVersion: db.data?.config?.version || '',
+    currentRuleVersion: summary.ruleVersion,
+    summary,
     events: enriched,
   }, null, 2);
 }
 
 export function exportFullDataJSON(): string {
+  const summary = getExportSummary();
+
   return JSON.stringify({
-    exportedAt: new Date().toISOString(),
+    exportedAt: summary.exportedAt,
+    summary,
     batches: db.data?.batches || [],
     points: db.data?.points || [],
     defects: db.data?.defects || [],
@@ -152,5 +186,6 @@ export function exportFullDataJSON(): string {
     events: db.data?.events || [],
     operationLogs: db.data?.operationLogs || [],
     config: db.data?.config,
+    configHistory: db.data?.configHistory || [],
   }, null, 2);
 }

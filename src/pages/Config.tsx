@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Settings, Ruler, Palette, RotateCcw, Save } from 'lucide-react';
+import { Settings, Ruler, Palette, RotateCcw, Save, History, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { api } from '../api/client';
 import { useToast } from '../components/common/Toast';
-import { DefectSeverity, LevelMappingItem, SEVERITY_ORDER } from '../../shared/types';
+import { DefectSeverity, LevelMappingItem, SEVERITY_ORDER, ConfigHistory } from '../../shared/types';
+import Empty from '../components/Empty';
 
 const SEVERITY_OPTIONS: { value: DefectSeverity; label: string }[] = [
   { value: 'critical', label: 'Critical (严重)' },
@@ -23,7 +24,7 @@ const COLOR_PRESETS = [
 
 export function Config() {
   const { addToast } = useToast();
-  const { config, loadConfig, loading, updateConfig: updateStoreConfig } = useAppStore();
+  const { config, configHistory, loadConfig, loadConfigHistory, loading, updateConfig: updateStoreConfig } = useAppStore();
   const [distanceThreshold, setDistanceThreshold] = useState<number>(5.0);
   const [levelMapping, setLevelMapping] = useState<LevelMappingItem[]>([]);
   const [saving, setSaving] = useState(false);
@@ -31,7 +32,8 @@ export function Config() {
 
   useEffect(() => {
     loadConfig();
-  }, [loadConfig]);
+    loadConfigHistory();
+  }, [loadConfig, loadConfigHistory]);
 
   useEffect(() => {
     if (config) {
@@ -67,7 +69,12 @@ export function Config() {
       });
       if (result.success) {
         updateStoreConfig(result.config);
-        addToast('success', `配置已保存，当前版本 v${result.config.version}`);
+        if (result.skipped) {
+          addToast('info', result.message || '配置未变化，已跳过');
+        } else {
+          addToast('success', `配置已保存，当前版本 v${result.config.version}`);
+        }
+        await loadConfigHistory();
       }
     } catch (e: any) {
       addToast('error', e.message || '保存失败');
@@ -83,7 +90,12 @@ export function Config() {
       const result = await api.config.reset();
       if (result.success) {
         updateStoreConfig(result.config);
-        addToast('success', '已重置为默认配置');
+        if (result.skipped) {
+          addToast('info', result.message || '已经是默认配置');
+        } else {
+          addToast('success', '已重置为默认配置');
+        }
+        await loadConfigHistory();
       }
     } catch (e: any) {
       addToast('error', e.message || '重置失败');
@@ -287,6 +299,132 @@ export function Config() {
               保存配置
             </button>
           </div>
+        </div>
+      </div>
+
+      <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+            <History size={20} className="text-primary-400" />
+            配置历史记录
+          </h2>
+          <span className="text-sm text-slate-400">
+            最近 {configHistory.length} 条变更
+          </span>
+        </div>
+
+        {loading.configHistory ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin w-6 h-6 border-4 border-primary-500 border-t-transparent rounded-full" />
+          </div>
+        ) : configHistory.length === 0 ? (
+          <Empty
+            icon={<History size={48} className="text-slate-600" />}
+            title="暂无历史记录"
+            description="保存或重置配置后，变更记录将显示在这里"
+          />
+        ) : (
+          <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+            {configHistory.map((item) => (
+              <HistoryItem key={item.id} item={item} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function HistoryItem({ item }: { item: ConfigHistory }) {
+  const actionLabel = item.action === 'save' ? '保存' : '重置';
+  const actionClass = item.action === 'save' 
+    ? 'bg-green-900/50 text-green-400 border-green-700' 
+    : 'bg-amber-900/50 text-amber-400 border-amber-700';
+
+  const formatTime = (isoString: string) => {
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return '刚刚';
+    if (diffMins < 60) return `${diffMins} 分钟前`;
+    if (diffHours < 24) return `${diffHours} 小时前`;
+    if (diffDays < 7) return `${diffDays} 天前`;
+    
+    return date.toLocaleString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const getLevelMapSummary = (mapping: typeof item.levelMapping.before) => {
+    return mapping
+      .sort((a, b) => SEVERITY_ORDER[b.severity] - SEVERITY_ORDER[a.severity])
+      .map(m => `${m.severity}:${m.level}`)
+      .join(', ');
+  };
+
+  return (
+    <div className="bg-slate-900 rounded-lg p-4 border border-slate-700 hover:border-slate-600 transition-colors">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <span className={`px-2 py-1 text-xs font-medium rounded border ${actionClass}`}>
+            {actionLabel}
+          </span>
+          <span className="text-primary-400 font-mono text-sm">v{item.version}</span>
+        </div>
+        <div className="text-right">
+          <p className="text-sm text-white">{item.operator}</p>
+          <p className="text-xs text-slate-500">{formatTime(item.operatedAt)}</p>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-slate-400 flex-shrink-0 w-20">距离阈值:</span>
+          <div className="flex items-center gap-2 font-mono">
+            <span className="text-slate-300">{item.distanceThreshold.before}m</span>
+            <ArrowRight size={14} className="text-slate-500" />
+            <span className={
+              item.distanceThreshold.before !== item.distanceThreshold.after
+                ? 'text-primary-400 font-semibold'
+                : 'text-slate-300'
+            }>
+              {item.distanceThreshold.after}m
+            </span>
+          </div>
+        </div>
+
+        <div className="text-sm">
+          <div className="flex items-start gap-2">
+            <span className="text-slate-400 flex-shrink-0 w-20 pt-0.5">等级映射:</span>
+            <div className="flex-1 space-y-1">
+              <div className="text-slate-500 text-xs">变更前: {getLevelMapSummary(item.levelMapping.before)}</div>
+              <div className="text-slate-300 text-xs">变更后: {getLevelMapSummary(item.levelMapping.after)}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2 mt-2">
+          {item.levelMapping.after.map((m) => (
+            <div
+              key={m.severity}
+              className="flex items-center gap-1.5 text-xs"
+            >
+              <div
+                className="w-3 h-3 rounded flex-shrink-0"
+                style={{ backgroundColor: m.color }}
+              />
+              <span className="text-slate-400">{m.severity}</span>
+              <span className="text-slate-300">→</span>
+              <span className="text-white font-medium">{m.level}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>

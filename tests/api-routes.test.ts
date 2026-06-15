@@ -159,6 +159,7 @@ describe('API 路由一致性测试（文档 vs 实际路由）', () => {
     db.data.rectifications = [];
     db.data.events = [];
     db.data.operationLogs = [];
+    db.data.configHistory = [];
     db.data.config = {
       id: 'default',
       distanceThreshold: 5.0,
@@ -784,6 +785,208 @@ describe('API 路由一致性测试（文档 vs 实际路由）', () => {
 
       const fullRes = await httpRequest(HOST, PORT, '/api/export/full/json', 'GET');
       assert.equal(fullRes.status, 200);
+    });
+  });
+
+  describe('5.5 配置历史记录功能', () => {
+    before(async () => {
+      const dbModule = await import('../api/models/db.js');
+      const db = dbModule.db;
+      const saveDb = dbModule.saveDb;
+      await db.read();
+      db.data.configHistory = [];
+      db.data.config.version = '1.0.0';
+      db.data.config.distanceThreshold = 5.0;
+      await saveDb();
+    });
+
+    it('GET /api/config/history 初始返回空数组', async () => {
+      const res = await httpRequest(HOST, PORT, '/api/config/history', 'GET');
+      assert.equal(res.status, 200);
+      const history = JSON.parse(res.body);
+      assert.ok(Array.isArray(history));
+      assert.equal(history.length, 0);
+    });
+
+    it('PUT /api/config 成功后生成历史记录', async () => {
+      const body = JSON.stringify({
+        distanceThreshold: 10.0,
+        levelMapping: [
+          { severity: 'critical', level: '一级', color: '#ef4444' },
+          { severity: 'major', level: '二级', color: '#f59e0b' },
+          { severity: 'medium', level: '三级', color: '#10b981' },
+          { severity: 'minor', level: '四级', color: '#6366f1' },
+        ],
+        updatedBy: '测试员',
+      });
+
+      const res = await httpRequest(HOST, PORT, '/api/config', 'PUT', body, 'application/json');
+      assert.equal(res.status, 200);
+      const result = JSON.parse(res.body);
+      assert.equal(result.success, true);
+      assert.ok(!result.skipped, '配置变化不应跳过');
+
+      const historyRes = await httpRequest(HOST, PORT, '/api/config/history', 'GET');
+      const history = JSON.parse(historyRes.body);
+      assert.equal(history.length, 1);
+
+      const record = history[0];
+      assert.equal(record.action, 'save');
+      assert.equal(record.operator, '测试员');
+      assert.equal(record.distanceThreshold.before, 5.0);
+      assert.equal(record.distanceThreshold.after, 10.0);
+      assert.ok(record.levelMapping.before.length === 4);
+      assert.ok(record.levelMapping.after.length === 4);
+    });
+
+    it('重复提交相同配置应跳过，不生成历史', async () => {
+      const body = JSON.stringify({
+        distanceThreshold: 10.0,
+        levelMapping: [
+          { severity: 'critical', level: '一级', color: '#ef4444' },
+          { severity: 'major', level: '二级', color: '#f59e0b' },
+          { severity: 'medium', level: '三级', color: '#10b981' },
+          { severity: 'minor', level: '四级', color: '#6366f1' },
+        ],
+        updatedBy: '测试员',
+      });
+
+      const res = await httpRequest(HOST, PORT, '/api/config', 'PUT', body, 'application/json');
+      assert.equal(res.status, 200);
+      const result = JSON.parse(res.body);
+      assert.equal(result.success, true);
+      assert.equal(result.skipped, true);
+      assert.ok(result.message?.includes('未发生变化'));
+
+      const historyRes = await httpRequest(HOST, PORT, '/api/config/history', 'GET');
+      const history = JSON.parse(historyRes.body);
+      assert.equal(history.length, 1, '历史记录不应增加');
+    });
+
+    it('POST /api/config/reset 成功后生成历史记录', async () => {
+      const body = JSON.stringify({ updatedBy: '测试员B' });
+      const res = await httpRequest(HOST, PORT, '/api/config/reset', 'POST', body, 'application/json');
+      assert.equal(res.status, 200);
+      const result = JSON.parse(res.body);
+      assert.equal(result.success, true);
+      assert.ok(!result.skipped);
+
+      const historyRes = await httpRequest(HOST, PORT, '/api/config/history', 'GET');
+      const history = JSON.parse(historyRes.body);
+      assert.equal(history.length, 2);
+
+      const latest = history[0];
+      assert.equal(latest.action, 'reset');
+      assert.equal(latest.operator, '测试员B');
+      assert.equal(latest.distanceThreshold.after, 5.0);
+    });
+
+    it('重置后再次重置应跳过', async () => {
+      const res = await httpRequest(HOST, PORT, '/api/config/reset', 'POST', '{}', 'application/json');
+      const result = JSON.parse(res.body);
+      assert.equal(result.success, true);
+      assert.equal(result.skipped, true);
+
+      const historyRes = await httpRequest(HOST, PORT, '/api/config/history', 'GET');
+      const history = JSON.parse(historyRes.body);
+      assert.equal(history.length, 2, '历史记录不应增加');
+    });
+
+    it('历史记录最多保留 10 条', async () => {
+      for (let i = 0; i < 15; i++) {
+        const body = JSON.stringify({
+          distanceThreshold: 5.0 + i,
+          levelMapping: [
+            { severity: 'critical', level: '一级', color: '#ef4444' },
+            { severity: 'major', level: '二级', color: '#f59e0b' },
+            { severity: 'medium', level: '三级', color: '#10b981' },
+            { severity: 'minor', level: '四级', color: '#6366f1' },
+          ],
+          updatedBy: `测试员${i}`,
+        });
+        await httpRequest(HOST, PORT, '/api/config', 'PUT', body, 'application/json');
+      }
+
+      const historyRes = await httpRequest(HOST, PORT, '/api/config/history', 'GET');
+      const history = JSON.parse(historyRes.body);
+      assert.equal(history.length, 10, '最多保留 10 条历史记录');
+    });
+
+    it('GET /api/config/history?limit=5 限制返回数量', async () => {
+      const res = await httpRequest(HOST, PORT, '/api/config/history?limit=5', 'GET');
+      const history = JSON.parse(res.body);
+      assert.equal(history.length, 5);
+    });
+
+    it('历史记录持久化：重启后仍可查询', async () => {
+      const dbModule = await import('../api/models/db.js');
+      const db = dbModule.db;
+      
+      const beforeRestart = JSON.parse(JSON.stringify(db.data.configHistory));
+      
+      await db.read();
+      
+      assert.equal(db.data.configHistory.length, beforeRestart.length);
+      assert.deepEqual(db.data.configHistory[0], beforeRestart[0]);
+    });
+  });
+
+  describe('5.6 导出摘要功能', () => {
+    before(async () => {
+      const dbModule = await import('../api/models/db.js');
+      const db = dbModule.db;
+      const saveDb = dbModule.saveDb;
+      await db.read();
+      db.data.configHistory = [];
+      db.data.config.version = '1.0.0';
+      db.data.config.distanceThreshold = 5.0;
+      await saveDb();
+    });
+
+    it('GET /api/export/summary 返回正确摘要', async () => {
+      const res = await httpRequest(HOST, PORT, '/api/export/summary', 'GET');
+      assert.equal(res.status, 200);
+      const summary = JSON.parse(res.body);
+      
+      assert.ok(summary.exportedAt);
+      assert.equal(summary.ruleVersion, '1.0.0');
+      assert.equal(summary.batchFilter.applied, false);
+      assert.equal(typeof summary.eventCount, 'number');
+      assert.ok(summary.eventCount > 0);
+      assert.ok(summary.statusCounts);
+      assert.ok(summary.levelCounts);
+    });
+
+    it('GET /api/export/summary?batchId=xxx 返回筛选后摘要', async () => {
+      const batchesRes = await httpRequest(HOST, PORT, '/api/batches', 'GET');
+      const batches = JSON.parse(batchesRes.body);
+      assert.ok(batches.length > 0);
+      
+      const batchId = batches[0].id;
+      const res = await httpRequest(HOST, PORT, `/api/export/summary?batchId=${batchId}`, 'GET');
+      const summary = JSON.parse(res.body);
+      
+      assert.equal(summary.batchFilter.applied, true);
+      assert.equal(summary.batchFilter.batchId, batchId);
+      assert.ok(summary.batchFilter.batchName);
+    });
+
+    it('JSON 导出包含摘要信息', async () => {
+      const res = await httpRequest(HOST, PORT, '/api/export/events/json', 'GET');
+      const data = JSON.parse(res.body);
+      
+      assert.ok(data.summary);
+      assert.equal(data.summary.ruleVersion, '1.0.0');
+      assert.equal(data.summary.eventCount, data.eventCount);
+    });
+
+    it('完整备份包含配置历史', async () => {
+      const res = await httpRequest(HOST, PORT, '/api/export/full/json', 'GET');
+      const data = JSON.parse(res.body);
+      
+      assert.ok(data.summary);
+      assert.ok(Array.isArray(data.configHistory));
+      assert.ok('config' in data);
     });
   });
 

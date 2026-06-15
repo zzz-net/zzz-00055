@@ -23,6 +23,7 @@ if (!fs.existsSync(dbPath)) {
     events: [],
     operationLogs: [],
     config: DEFAULT_CONFIG,
+    configHistory: [],
   };
   fs.writeFileSync(dbPath, JSON.stringify(initialData, null, 2));
 }
@@ -36,6 +37,7 @@ const initialData: Database = {
   events: [],
   operationLogs: [],
   config: DEFAULT_CONFIG,
+  configHistory: [],
 };
 export const db = new Low<Database>(adapter, initialData);
 
@@ -50,6 +52,7 @@ if (!db.data) {
     events: [],
     operationLogs: [],
     config: DEFAULT_CONFIG,
+    configHistory: [],
   };
   db.data = initialData;
   await db.write();
@@ -57,6 +60,11 @@ if (!db.data) {
 
 if (!db.data.config) {
   db.data.config = DEFAULT_CONFIG;
+  await db.write();
+}
+
+if (!db.data.configHistory) {
+  db.data.configHistory = [];
   await db.write();
 }
 

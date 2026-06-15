@@ -1,4 +1,4 @@
-import { Batch, Event, Config, EventStatus, ValidationError, EventDetailResponse } from '../../shared/types';
+import { Batch, Event, Config, EventStatus, ValidationError, EventDetailResponse, ConfigHistory, ExportSummary } from '../../shared/types';
 
 const API_BASE = '/api';
 
@@ -94,18 +94,26 @@ export const api = {
   
   config: {
     get: () => request<Config>('/config'),
+    getHistory: (limit?: number) => {
+      const query = limit ? `?limit=${limit}` : '';
+      return request<ConfigHistory[]>(`/config/history${query}`);
+    },
     update: (config: Partial<Config>) =>
-      request<{ success: boolean; config: Config }>('/config', {
+      request<{ success: boolean; config: Config; skipped?: boolean; message?: string }>('/config', {
         method: 'PUT',
         body: JSON.stringify(config),
       }),
     reset: () =>
-      request<{ success: boolean; config: Config }>('/config/reset', {
+      request<{ success: boolean; config: Config; skipped?: boolean; message?: string }>('/config/reset', {
         method: 'POST',
       }),
   },
   
   export: {
+    getSummary: (batchId?: string) => {
+      const query = batchId ? `?batchId=${batchId}` : '';
+      return request<ExportSummary>(`/export/summary${query}`);
+    },
     eventsCSV: (batchId?: string) => {
       const query = batchId ? `?batchId=${batchId}` : '';
       window.open(`${API_BASE}/export/events/csv${query}`, '_blank');

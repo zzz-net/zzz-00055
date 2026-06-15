@@ -80,6 +80,7 @@ describe('回归测试：缺陷复盘看板', () => {
     db.data.rectifications = [];
     db.data.events = [];
     db.data.operationLogs = [];
+    db.data.configHistory = [];
     db.data.config = {
       id: 'default',
       distanceThreshold: 5.0,
@@ -398,6 +399,7 @@ describe('回归测试：缺陷复盘看板', () => {
       assert.equal(db.data.events.length, beforeState.events.length);
       assert.equal(db.data.config.version, beforeState.config.version);
       assert.equal(db.data.config.distanceThreshold, beforeState.config.distanceThreshold);
+      assert.equal(db.data.configHistory.length, beforeState.configHistory.length);
 
       db.data.events.forEach((e: any, i: number) => {
         assert.equal(e.ruleVersion, beforeState.events[i].ruleVersion);
@@ -411,6 +413,30 @@ describe('回归测试：缺陷复盘看板', () => {
       db.data.events.forEach((e: any) => {
         assert.equal(e.ruleVersion, '2.0.0');
       });
+    });
+
+    it('配置历史重启后不丢失', async () => {
+      const historyModule = await import('../api/services/configHistoryService.js');
+      const addConfigHistory = historyModule.addConfigHistory;
+      
+      const oldConfig = { ...db.data.config };
+      db.data.config.distanceThreshold = 15.0;
+      db.data.config.version = '2.0.1';
+      const newConfig = { ...db.data.config };
+      
+      addConfigHistory(oldConfig, newConfig, 'save', '测试员');
+      await saveDb();
+      
+      const historyCount = db.data.configHistory.length;
+      assert.ok(historyCount > 0);
+      
+      await db.read();
+      assert.equal(db.data.configHistory.length, historyCount);
+      
+      const latest = db.data.configHistory[0];
+      assert.equal(latest.action, 'save');
+      assert.equal(latest.operator, '测试员');
+      assert.equal(latest.distanceThreshold.after, 15.0);
     });
   });
 

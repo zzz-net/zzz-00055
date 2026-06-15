@@ -294,13 +294,13 @@
         }
       ],
       "createdAt": "2026-06-15T21:54:47.140Z",
-      "updatedAt": "2026-06-15T21:54:47.232Z",
-      "reviewRemark": "API路由测试复核备注",
+      "updatedAt": "2026-06-15T22:29:30.563Z",
       "reviewer": "测试员A",
+      "reviewRemark": "API路由测试复核备注",
       "reviewedAt": "2026-06-15T21:54:47.232Z"
     },
     {
-      "id": "5c06ccdc-368d-4433-b66c-773bfefb0d54",
+      "id": "c039a163-b4e3-4059-b042-9e5c28e20a91",
       "status": "pending",
       "mergedDefectIds": [
         "6b3257f3-a714-45ed-bb69-9e9b1662f1db"
@@ -329,11 +329,11 @@
           }
         }
       ],
-      "createdAt": "2026-06-15T21:54:47.140Z",
-      "updatedAt": "2026-06-15T21:54:47.140Z"
+      "createdAt": "2026-06-15T22:29:30.563Z",
+      "updatedAt": "2026-06-15T22:29:30.563Z"
     },
     {
-      "id": "3a50eb24-89a5-49c8-bd98-cbcbd181d801",
+      "id": "bdfbce63-ed23-44cf-8e5f-8773e659e253",
       "status": "pending",
       "mergedDefectIds": [
         "0b82d87b-44ea-4b80-89dc-ef61bda5830d"
@@ -362,8 +362,8 @@
           }
         }
       ],
-      "createdAt": "2026-06-15T21:54:47.140Z",
-      "updatedAt": "2026-06-15T21:54:47.140Z"
+      "createdAt": "2026-06-15T22:29:30.563Z",
+      "updatedAt": "2026-06-15T22:29:30.563Z"
     },
     {
       "id": "e37a37fa-31a5-4f12-8926-00aebcdfb27d",
@@ -396,10 +396,10 @@
         }
       ],
       "createdAt": "2026-06-15T21:54:47.140Z",
-      "updatedAt": "2026-06-15T21:54:47.140Z"
+      "updatedAt": "2026-06-15T22:29:30.563Z"
     },
     {
-      "id": "d8b847b1-4b49-4c19-b274-883f82b0aecb",
+      "id": "cdbbd77e-a9a1-4f68-af17-6481b6a34686",
       "status": "pending",
       "mergedDefectIds": [
         "73551534-afc8-49a3-b69c-41b66ec28230"
@@ -428,8 +428,8 @@
           }
         }
       ],
-      "createdAt": "2026-06-15T21:54:47.140Z",
-      "updatedAt": "2026-06-15T21:54:47.140Z"
+      "createdAt": "2026-06-15T22:29:30.563Z",
+      "updatedAt": "2026-06-15T22:29:30.563Z"
     }
   ],
   "operationLogs": [
@@ -440,6 +440,14 @@
       "action": "add_remark",
       "remark": "API路由测试复核备注",
       "operatedAt": "2026-06-15T21:54:47.232Z"
+    },
+    {
+      "id": "4769071c-2082-4113-a0f0-9c49734ef12b",
+      "eventId": "system",
+      "operator": "system",
+      "action": "rule_recalculated",
+      "remark": "规则版本从 1.0.14 更新到 1.0.0，重算 5 个事件",
+      "operatedAt": "2026-06-15T22:29:30.563Z"
     }
   ],
   "config": {
@@ -468,7 +476,579 @@
       }
     ],
     "version": "1.0.0",
-    "updatedAt": "2026-06-15T21:54:47.070Z",
-    "updatedBy": "system"
-  }
+    "updatedAt": "2026-06-15T22:29:30.548Z",
+    "updatedBy": "admin"
+  },
+  "configHistory": [
+    {
+      "id": "2bc88769-244f-44c7-8cde-55bc4fee4089",
+      "version": "1.0.0",
+      "action": "reset",
+      "operator": "admin",
+      "operatedAt": "2026-06-15T22:29:30.548Z",
+      "distanceThreshold": {
+        "before": 12,
+        "after": 5
+      },
+      "levelMapping": {
+        "before": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ],
+        "after": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "dd58f1e3-926c-4f9a-85e1-5a2e149d559e",
+      "version": "1.0.14",
+      "action": "save",
+      "operator": "admin",
+      "operatedAt": "2026-06-15T22:29:30.509Z",
+      "distanceThreshold": {
+        "before": 11.5,
+        "after": 12
+      },
+      "levelMapping": {
+        "before": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ],
+        "after": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fcdc72c4-97cc-47b3-9c17-101db6e3382a",
+      "version": "1.0.13",
+      "action": "save",
+      "operator": "admin",
+      "operatedAt": "2026-06-15T22:29:30.384Z",
+      "distanceThreshold": {
+        "before": 11,
+        "after": 11.5
+      },
+      "levelMapping": {
+        "before": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ],
+        "after": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "e8221a87-adc3-4ae7-b838-502aedb3912b",
+      "version": "1.0.12",
+      "action": "save",
+      "operator": "admin",
+      "operatedAt": "2026-06-15T22:29:30.355Z",
+      "distanceThreshold": {
+        "before": 10.5,
+        "after": 11
+      },
+      "levelMapping": {
+        "before": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ],
+        "after": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "1efcdb97-eba9-4d86-9f25-f9c1297ece2f",
+      "version": "1.0.11",
+      "action": "save",
+      "operator": "admin",
+      "operatedAt": "2026-06-15T22:29:30.206Z",
+      "distanceThreshold": {
+        "before": 10,
+        "after": 10.5
+      },
+      "levelMapping": {
+        "before": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ],
+        "after": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "8f26e7ea-44a6-4df6-a5c6-881847d0de07",
+      "version": "1.0.10",
+      "action": "save",
+      "operator": "admin",
+      "operatedAt": "2026-06-15T22:29:30.079Z",
+      "distanceThreshold": {
+        "before": 9.5,
+        "after": 10
+      },
+      "levelMapping": {
+        "before": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ],
+        "after": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "5e951c8a-9e3c-4655-a523-869c90e478f2",
+      "version": "1.0.9",
+      "action": "save",
+      "operator": "admin",
+      "operatedAt": "2026-06-15T22:29:30.060Z",
+      "distanceThreshold": {
+        "before": 9,
+        "after": 9.5
+      },
+      "levelMapping": {
+        "before": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ],
+        "after": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "6028db8f-fde1-42b7-a58c-6a51ebc0a205",
+      "version": "1.0.8",
+      "action": "save",
+      "operator": "admin",
+      "operatedAt": "2026-06-15T22:29:30.004Z",
+      "distanceThreshold": {
+        "before": 8.5,
+        "after": 9
+      },
+      "levelMapping": {
+        "before": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ],
+        "after": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "52097cbc-c0b8-44d1-8733-b790ae5e299a",
+      "version": "1.0.7",
+      "action": "save",
+      "operator": "admin",
+      "operatedAt": "2026-06-15T22:29:29.959Z",
+      "distanceThreshold": {
+        "before": 8,
+        "after": 8.5
+      },
+      "levelMapping": {
+        "before": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ],
+        "after": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "a36ea80b-0af3-45fc-abbf-1247b8dacfab",
+      "version": "1.0.6",
+      "action": "save",
+      "operator": "admin",
+      "operatedAt": "2026-06-15T22:29:29.941Z",
+      "distanceThreshold": {
+        "before": 7.5,
+        "after": 8
+      },
+      "levelMapping": {
+        "before": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ],
+        "after": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ]
+      }
+    }
+  ]
 }
