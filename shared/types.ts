@@ -80,7 +80,7 @@ export interface SourceEvidence {
   batchId: string;
   batchName: string;
   recordId: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
 export interface OperationLog {
@@ -94,7 +94,7 @@ export interface OperationLog {
   operatedAt: string;
 }
 
-export type ConfigHistoryAction = 'save' | 'reset' | 'force_save';
+export type ConfigHistoryAction = 'save' | 'reset' | 'force_save' | 'conflict_failed' | 'skip_duplicate' | 'import' | 'force_reset';
 
 export interface ConfigHistory {
   id: string;
@@ -102,7 +102,10 @@ export interface ConfigHistory {
   action: ConfigHistoryAction;
   operator: string;
   operatedAt: string;
+  result: 'success' | 'failed' | 'skipped';
+  trigger: 'user' | 'system' | 'import';
   conflictNote?: string;
+  message?: string;
   distanceThreshold: {
     before: number;
     after: number;

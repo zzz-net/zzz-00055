@@ -1,7 +1,7 @@
 import db from '../models/db.js';
-import { Event, OperationLog, ConfigHistory, ExportSummary } from '../../shared/types.js';
+import { Event, OperationLog, ExportSummary } from '../../shared/types.js';
 
-function toCSV(data: any[], headers: string[]): string {
+function toCSV(data: Record<string, unknown>[], headers: string[]): string {
   const headerRow = headers.join(',');
   const dataRows = data.map(row =>
     headers.map(h => {
@@ -47,7 +47,7 @@ function getSourceEvidenceSummary(event: Event): {
   const evidenceBatchNames = Array.from(batchNameSet).join('|');
 
   const defectEvidence = evidence.find(e => e.type === 'defect' && e.recordId === event.primaryDefectId);
-  const primaryDefectPointCode = defectEvidence?.data?.pointCode || '';
+  const primaryDefectPointCode = (defectEvidence?.data?.pointCode as string) || '';
 
   return {
     evidenceCount,
@@ -209,6 +209,9 @@ export function exportConfigHistoryCSV(): string {
       action: item.action,
       operator: item.operator,
       operatedAt: item.operatedAt,
+      result: item.result,
+      trigger: item.trigger,
+      message: item.message || '',
       conflictNote: item.conflictNote || '',
       distanceThresholdBefore: item.distanceThreshold.before,
       distanceThresholdAfter: item.distanceThreshold.after,
@@ -218,7 +221,7 @@ export function exportConfigHistoryCSV(): string {
   });
 
   return toCSV(flattened, [
-    'id', 'version', 'action', 'operator', 'operatedAt', 'conflictNote',
+    'id', 'version', 'action', 'operator', 'operatedAt', 'result', 'trigger', 'message', 'conflictNote',
     'distanceThresholdBefore', 'distanceThresholdAfter',
     'levelMappingBefore', 'levelMappingAfter',
   ]);

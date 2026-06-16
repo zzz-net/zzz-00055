@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Settings, Ruler, Palette, RotateCcw, Save, History, ArrowRight, AlertTriangle, Download } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Settings, Ruler, Palette, RotateCcw, Save, History, ArrowRight, AlertTriangle, Download, Upload, XCircle, SkipForward, RefreshCcw, Zap } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { api } from '../api/client';
 import { useToast } from '../components/common/Toast';
-import { DefectSeverity, LevelMappingItem, SEVERITY_ORDER, ConfigHistory } from '../../shared/types';
+import { DefectSeverity, LevelMappingItem, SEVERITY_ORDER, ConfigHistory, Config as ConfigType } from '../../shared/types';
 import Empty from '../components/Empty';
 
 const SEVERITY_OPTIONS: { value: DefectSeverity; label: string }[] = [
@@ -29,6 +29,10 @@ export function Config() {
   const [levelMapping, setLevelMapping] = useState<LevelMappingItem[]>([]);
   const [saving, setSaving] = useState(false);
   const [operator, setOperator] = useState('admin');
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [conflictData, setConflictData] = useState<{ message?: string; currentVersion?: string; currentConfig?: ConfigType } | null>(null);
+  const [conflictRetryFn, setConflictRetryFn] = useState<((force: boolean) => Promise<void>) | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadConfig();
@@ -50,18 +54,23 @@ export function Config() {
     });
   };
 
-  const handleConflict = (errorData: { message?: string; currentVersion?: string; currentConfig?: any }, retryFn: (force: boolean) => Promise<void>) => {
-    const msg = errorData.message || '配置已被他人修改';
-    const doForce = confirm(
-      `${msg}\n\n点击"确定"强制覆盖当前配置，点击"取消"放弃本次修改并刷新页面。`
-    );
-    if (doForce) {
-      retryFn(true);
+  const handleConflict = (errorData: { message?: string; currentVersion?: string; currentConfig?: ConfigType }, retryFn: (force: boolean) => Promise<void>) => {
+    setConflictData(errorData);
+    setConflictRetryFn(() => retryFn);
+    setShowConflictModal(true);
+  };
+
+  const resolveConflict = async (force: boolean) => {
+    setShowConflictModal(false);
+    if (force && conflictRetryFn) {
+      await conflictRetryFn(true);
     } else {
       loadConfig();
       loadConfigHistory();
       addToast('info', '已刷新为最新配置');
     }
+    setConflictData(null);
+    setConflictRetryFn(null);
   };
 
   const handleSave = async (force = false) => {
@@ -92,11 +101,12 @@ export function Config() {
         }
         await loadConfigHistory();
       }
-    } catch (e: any) {
-      if (e.status === 409 && e.data) {
-        handleConflict(e.data, (f) => handleSave(f));
+    } catch (e: unknown) {
+      const err = e as { status?: number; data?: { message?: string; currentVersion?: string; currentConfig?: ConfigType }; message?: string };
+      if (err.status === 409 && err.data) {
+        handleConflict(err.data, (f) => handleSave(f));
       } else {
-        addToast('error', e.message || '保存失败');
+        addToast('error', err.message || '保存失败');
       }
     } finally {
       setSaving(false);
@@ -110,21 +120,67 @@ export function Config() {
       const result = await api.config.reset(operator || 'admin', config?.version, force);
       if (result.success) {
         updateStoreConfig(result.config);
+        setDistanceThreshold(result.config.distanceThreshold);
+        setLevelMapping(result.config.levelMapping);
         if (result.skipped) {
           addToast('info', result.message || '已经是默认配置');
         } else {
-          addToast('success', '已重置为默认配置');
+          addToast('success', `已重置为默认配置，当前版本 v${result.config.version}`);
         }
         await loadConfigHistory();
       }
-    } catch (e: any) {
-      if (e.status === 409 && e.data) {
-        handleConflict(e.data, (f) => handleReset(f));
+    } catch (e: unknown) {
+      const err = e as { status?: number; data?: { message?: string; currentVersion?: string; currentConfig?: ConfigType }; message?: string };
+      if (err.status === 409 && err.data) {
+        handleConflict(err.data, (f) => handleReset(f));
       } else {
-        addToast('error', e.message || '重置失败');
+        addToast('error', err.message || '重置失败');
       }
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleExportFull = () => {
+    api.export.fullJSON();
+    addToast('info', '正在导出完整备份...');
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!confirm('确定要导入完整数据吗？这将覆盖当前所有数据。')) {
+      e.target.value = '';
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const result = await api.import.fullData(file);
+      
+      if (result.success) {
+        addToast('success', result.message);
+        if (result.warnings && result.warnings.length > 0) {
+          result.warnings.forEach(w => addToast('warning', w));
+        }
+        await Promise.all([loadConfig(), loadConfigHistory()]);
+      } else {
+        addToast('error', result.message || '导入失败');
+      }
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      addToast('error', e.message || '导入失败');
+    } finally {
+      setSaving(false);
+      e.target.value = '';
     }
   };
 
@@ -302,16 +358,41 @@ export function Config() {
           </div>
 
           <div className="flex gap-3 ml-auto">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              onChange={handleImportFile}
+              className="hidden"
+            />
             <button
-              onClick={handleReset}
+              onClick={handleExportFull}
               disabled={saving}
               className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded font-medium transition-colors"
+              title="导出完整数据备份（JSON）"
+            >
+              <Download size={16} />
+              导出备份
+            </button>
+            <button
+              onClick={handleImportClick}
+              disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded font-medium transition-colors"
+              title="导入完整数据备份（JSON）"
+            >
+              <Upload size={16} />
+              导入备份
+            </button>
+            <button
+              onClick={() => handleReset(false)}
+              disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded font-medium transition-colors"
             >
               <RotateCcw size={16} />
               重置默认
             </button>
             <button
-              onClick={() => handleSave()}
+              onClick={() => handleSave(false)}
               disabled={saving}
               className="flex items-center gap-2 px-6 py-2 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded font-medium transition-colors"
             >
@@ -364,18 +445,76 @@ export function Config() {
           </div>
         )}
       </div>
+
+      {showConflictModal && conflictData && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 border border-slate-600 rounded-lg max-w-lg w-full p-6 shadow-2xl">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="w-12 h-12 rounded-full bg-red-900/50 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle size={24} className="text-red-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-white mb-2">配置版本冲突</h3>
+                <p className="text-slate-300 text-sm leading-relaxed">
+                  {conflictData.message || '配置已被他人修改'}
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-slate-900 rounded-lg p-4 mb-6 border border-slate-700">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-slate-400 text-xs mb-1">您的版本</p>
+                  <p className="text-slate-300 font-mono">v{config?.version}</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 text-xs mb-1">最新版本</p>
+                  <p className="text-primary-400 font-mono font-semibold">v{conflictData.currentVersion}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => resolveConflict(false)}
+                className="flex-1 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium transition-colors"
+              >
+                取消并刷新
+              </button>
+              <button
+                onClick={() => resolveConflict(true)}
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <Zap size={16} />
+                强制覆盖
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-const ACTION_CONFIG: Record<string, { label: string; class: string }> = {
-  save: { label: '保存', class: 'bg-green-900/50 text-green-400 border-green-700' },
-  reset: { label: '重置', class: 'bg-amber-900/50 text-amber-400 border-amber-700' },
-  force_save: { label: '强制覆盖', class: 'bg-red-900/50 text-red-400 border-red-700' },
+const ACTION_CONFIG: Record<string, { label: string; class: string; icon: React.ReactNode }> = {
+  save: { label: '保存', class: 'bg-green-900/50 text-green-400 border-green-700', icon: <Save size={12} /> },
+  reset: { label: '重置', class: 'bg-amber-900/50 text-amber-400 border-amber-700', icon: <RotateCcw size={12} /> },
+  force_save: { label: '强制覆盖', class: 'bg-red-900/50 text-red-400 border-red-700', icon: <Zap size={12} /> },
+  force_reset: { label: '强制重置', class: 'bg-red-900/50 text-red-400 border-red-700', icon: <RefreshCcw size={12} /> },
+  conflict_failed: { label: '冲突失败', class: 'bg-red-900/50 text-red-400 border-red-700', icon: <XCircle size={12} /> },
+  skip_duplicate: { label: '跳过重复', class: 'bg-slate-700/50 text-slate-400 border-slate-600', icon: <SkipForward size={12} /> },
+  import: { label: '数据导入', class: 'bg-blue-900/50 text-blue-400 border-blue-700', icon: <Upload size={12} /> },
+};
+
+const RESULT_CONFIG: Record<string, { label: string; class: string }> = {
+  success: { label: '成功', class: 'text-green-400' },
+  failed: { label: '失败', class: 'text-red-400' },
+  skipped: { label: '跳过', class: 'text-slate-400' },
 };
 
 function HistoryItem({ item }: { item: ConfigHistory }) {
   const actionCfg = ACTION_CONFIG[item.action] || ACTION_CONFIG.save;
+  const resultCfg = RESULT_CONFIG[item.result] || RESULT_CONFIG.success;
 
   const formatTime = (isoString: string) => {
     const date = new Date(isoString);
@@ -409,16 +548,26 @@ function HistoryItem({ item }: { item: ConfigHistory }) {
     <div className="bg-slate-900 rounded-lg p-4 border border-slate-700 hover:border-slate-600 transition-colors">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <span className={`px-2 py-1 text-xs font-medium rounded border ${actionCfg.class}`}>
+          <span className={`px-2 py-1 text-xs font-medium rounded border flex items-center gap-1 ${actionCfg.class}`}>
+            {actionCfg.icon}
             {actionCfg.label}
           </span>
           <span className="text-primary-400 font-mono text-sm">v{item.version}</span>
+          <span className={`text-xs font-medium ${resultCfg.class}`}>
+            {resultCfg.label}
+          </span>
         </div>
         <div className="text-right">
           <p className="text-sm text-white">{item.operator}</p>
           <p className="text-xs text-slate-500">{formatTime(item.operatedAt)}</p>
         </div>
       </div>
+
+      {item.message && (
+        <div className="mb-2 text-xs text-slate-400">
+          {item.message}
+        </div>
+      )}
 
       {item.conflictNote && (
         <div className="flex items-start gap-2 mb-3 p-2 bg-red-950/40 border border-red-800/50 rounded text-xs">

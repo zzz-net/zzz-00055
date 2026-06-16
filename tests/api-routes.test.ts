@@ -839,7 +839,7 @@ describe('API 路由一致性测试（文档 vs 实际路由）', () => {
       assert.ok(record.levelMapping.after.length === 4);
     });
 
-    it('重复提交相同配置应跳过，不生成历史', async () => {
+    it('重复提交相同配置应跳过，生成 skip_duplicate 历史', async () => {
       const body = JSON.stringify({
         distanceThreshold: 10.0,
         levelMapping: [
@@ -860,7 +860,9 @@ describe('API 路由一致性测试（文档 vs 实际路由）', () => {
 
       const historyRes = await httpRequest(HOST, PORT, '/api/config/history', 'GET');
       const history = JSON.parse(historyRes.body);
-      assert.equal(history.length, 1, '历史记录不应增加');
+      assert.equal(history.length, 2, '应生成 skip_duplicate 历史记录');
+      assert.equal(history[0].action, 'skip_duplicate');
+      assert.equal(history[0].result, 'skipped');
     });
 
     it('POST /api/config/reset 成功后生成历史记录', async () => {
@@ -873,7 +875,7 @@ describe('API 路由一致性测试（文档 vs 实际路由）', () => {
 
       const historyRes = await httpRequest(HOST, PORT, '/api/config/history', 'GET');
       const history = JSON.parse(historyRes.body);
-      assert.equal(history.length, 2);
+      assert.equal(history.length, 3);
 
       const latest = history[0];
       assert.equal(latest.action, 'reset');
@@ -906,7 +908,7 @@ describe('API 路由一致性测试（文档 vs 实际路由）', () => {
       assert.equal(latest.operator, 'admin');
     });
 
-    it('重置后再次重置应跳过', async () => {
+    it('重置后再次重置应跳过，生成 skip_duplicate 历史', async () => {
       const historyBefore = await httpRequest(HOST, PORT, '/api/config/history', 'GET');
       const countBefore = JSON.parse(historyBefore.body).length;
 
@@ -917,7 +919,9 @@ describe('API 路由一致性测试（文档 vs 实际路由）', () => {
 
       const historyRes = await httpRequest(HOST, PORT, '/api/config/history', 'GET');
       const history = JSON.parse(historyRes.body);
-      assert.equal(history.length, countBefore, '历史记录不应增加');
+      assert.equal(history.length, countBefore + 1, '应生成 skip_duplicate 历史记录');
+      assert.equal(history[0].action, 'skip_duplicate');
+      assert.equal(history[0].result, 'skipped');
     });
 
     it('历史记录最多保留 10 条', async () => {
@@ -1152,7 +1156,7 @@ describe('API 路由一致性测试（文档 vs 实际路由）', () => {
       const historyRes = await httpRequest(HOST, PORT, '/api/config/history', 'GET');
       const history = JSON.parse(historyRes.body);
       const latest = history[0];
-      assert.equal(latest.action, 'force_save');
+      assert.equal(latest.action, 'force_reset');
       assert.ok(latest.conflictNote);
     });
   });

@@ -1,5 +1,6 @@
 import db, { saveDb } from '../models/db.js';
-import { Config, ConfigHistory, Database, DEFAULT_CONFIG } from '../../shared/types.js';
+import { Config, ConfigHistory } from '../../shared/types.js';
+import { addConfigHistory } from './configHistoryService.js';
 
 interface FullDataImportResult {
   success: boolean;
@@ -9,21 +10,29 @@ interface FullDataImportResult {
   warnings?: string[];
 }
 
-export async function importFullData(data: any): Promise<FullDataImportResult> {
+function parseVersion(version: string): number {
+  const [major, minor, patch] = version.split('.').map(Number);
+  return major * 10000 + minor * 100 + patch;
+}
+
+export async function importFullData(data: unknown): Promise<FullDataImportResult> {
   await db.read();
 
   if (!db.data) {
     return { success: false, message: '数据库未初始化' };
   }
 
+  const importData = data as Record<string, unknown>;
   const warnings: string[] = [];
 
-  if (!data.config) {
+  if (!importData.config) {
     return { success: false, message: '导入数据缺少 config 字段' };
   }
 
-  const importedConfig = data.config as Config;
-  const importedHistory: ConfigHistory[] = Array.isArray(data.configHistory) ? data.configHistory : [];
+  const oldConfig = { ...db.data.config };
+  const importedConfig = importData.config as Config;
+  const importedHistory: ConfigHistory[] = Array.isArray(importData.configHistory) ? [...importData.configHistory] : [];
+  const importedHistoryCount = importedHistory.length;
 
   if (importedHistory.length > 0) {
     const latestHistoryVersion = importedHistory[0].version;
@@ -34,22 +43,45 @@ export async function importFullData(data: any): Promise<FullDataImportResult> {
     }
   }
 
-  db.data.batches = Array.isArray(data.batches) ? data.batches : db.data.batches;
-  db.data.points = Array.isArray(data.points) ? data.points : db.data.points;
-  db.data.defects = Array.isArray(data.defects) ? data.defects : db.data.defects;
-  db.data.rectifications = Array.isArray(data.rectifications) ? data.rectifications : db.data.rectifications;
-  db.data.events = Array.isArray(data.events) ? data.events : db.data.events;
-  db.data.operationLogs = Array.isArray(data.operationLogs) ? data.operationLogs : db.data.operationLogs;
-  db.data.config = importedConfig;
+  const currentVersionNum = parseVersion(db.data.config.version);
+  const importedVersionNum = parseVersion(importedConfig.version);
+  let finalConfig = importedConfig;
+
+  if (importedVersionNum <= currentVersionNum) {
+    const [major, minor, patch] = db.data.config.version.split('.').map(Number);
+    finalConfig = {
+      ...importedConfig,
+      version: `${major}.${minor}.${patch + 1}`,
+      updatedAt: new Date().toISOString(),
+      updatedBy: 'import',
+    };
+    warnings.push(
+      `导入版本 v${importedConfig.version} 不高于当前版本 v${db.data.config.version}，已自动递增为 v${finalConfig.version}`
+    );
+  }
+
+  db.data.batches = Array.isArray(importData.batches) ? importData.batches as [] : db.data.batches;
+  db.data.points = Array.isArray(importData.points) ? importData.points as [] : db.data.points;
+  db.data.defects = Array.isArray(importData.defects) ? importData.defects as [] : db.data.defects;
+  db.data.rectifications = Array.isArray(importData.rectifications) ? importData.rectifications as [] : db.data.rectifications;
+  db.data.events = Array.isArray(importData.events) ? importData.events as [] : db.data.events;
+  db.data.operationLogs = Array.isArray(importData.operationLogs) ? importData.operationLogs as [] : db.data.operationLogs;
+  db.data.config = finalConfig;
   db.data.configHistory = importedHistory;
+
+  addConfigHistory(oldConfig, finalConfig, 'import', 'import', {
+    result: 'success',
+    trigger: 'import',
+    message: `完整数据导入成功，配置版本 v${finalConfig.version}，历史记录 ${importedHistoryCount} 条`,
+  });
 
   await saveDb();
 
   return {
     success: true,
-    message: `完整数据导入成功，配置版本 v${importedConfig.version}，历史记录 ${importedHistory.length} 条`,
-    configVersion: importedConfig.version,
-    historyCount: importedHistory.length,
+    message: `完整数据导入成功，配置版本 v${finalConfig.version}，历史记录 ${importedHistoryCount} 条`,
+    configVersion: finalConfig.version,
+    historyCount: importedHistoryCount,
     warnings: warnings.length > 0 ? warnings : undefined,
   };
 }

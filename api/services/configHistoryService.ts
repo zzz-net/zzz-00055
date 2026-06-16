@@ -36,7 +36,12 @@ export function addConfigHistory(
   newConfig: Config,
   action: ConfigHistoryAction,
   operator: string,
-  conflictNote?: string
+  options?: {
+    conflictNote?: string;
+    message?: string;
+    result?: 'success' | 'failed' | 'skipped';
+    trigger?: 'user' | 'system' | 'import';
+  }
 ): ConfigHistory {
   const history: ConfigHistory = {
     id: crypto.randomUUID(),
@@ -44,7 +49,10 @@ export function addConfigHistory(
     action,
     operator,
     operatedAt: new Date().toISOString(),
-    conflictNote,
+    result: options?.result || 'success',
+    trigger: options?.trigger || 'user',
+    conflictNote: options?.conflictNote,
+    message: options?.message,
     distanceThreshold: {
       before: oldConfig.distanceThreshold,
       after: newConfig.distanceThreshold,

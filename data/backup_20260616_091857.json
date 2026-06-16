@@ -1,4 +1,22 @@
 {
+  "exportedAt": "2026-06-16T01:18:57.698Z",
+  "summary": {
+    "exportedAt": "2026-06-16T01:18:57.698Z",
+    "ruleVersion": "1.0.2",
+    "batchFilter": {
+      "applied": false
+    },
+    "eventCount": 5,
+    "statusCounts": {
+      "pending": 5
+    },
+    "levelCounts": {
+      "一级": 2,
+      "三级": 1,
+      "二级": 1,
+      "四级": 1
+    }
+  },
   "batches": [
     {
       "id": "6dfed9b4-2fd2-4cfd-a825-07d864eb81cf",
@@ -475,71 +493,11 @@
         "color": "#6366f1"
       }
     ],
-    "version": "1.0.4",
-    "updatedAt": "2026-06-16T01:18:58.140Z",
-    "updatedBy": "import"
+    "version": "1.0.2",
+    "updatedAt": "2026-06-16T01:18:57.23Z",
+    "updatedBy": "测试员A"
   },
   "configHistory": [
-    {
-      "id": "4b208e04-46d8-41d4-b5cb-c6b57425bca7",
-      "version": "1.0.4",
-      "action": "import",
-      "operator": "import",
-      "operatedAt": "2026-06-16T01:18:58.140Z",
-      "result": "success",
-      "trigger": "import",
-      "message": "完整数据导入成功，配置版本 v1.0.4，历史记录 4 条",
-      "distanceThreshold": {
-        "before": 20,
-        "after": 5
-      },
-      "levelMapping": {
-        "before": [
-          {
-            "severity": "critical",
-            "color": "#ef4444",
-            "level": "一级"
-          },
-          {
-            "severity": "major",
-            "color": "#f59e0b",
-            "level": "二级"
-          },
-          {
-            "severity": "medium",
-            "color": "#10b981",
-            "level": "三级"
-          },
-          {
-            "severity": "minor",
-            "color": "#6366f1",
-            "level": "四级"
-          }
-        ],
-        "after": [
-          {
-            "severity": "critical",
-            "level": "一级",
-            "color": "#ef4444"
-          },
-          {
-            "severity": "major",
-            "level": "二级",
-            "color": "#f59e0b"
-          },
-          {
-            "severity": "medium",
-            "level": "三级",
-            "color": "#10b981"
-          },
-          {
-            "severity": "minor",
-            "level": "四级",
-            "color": "#6366f1"
-          }
-        ]
-      }
-    },
     {
       "id": "5dae38dd-b8b8-472e-bfc9-0f8084cba0a1",
       "version": "1.0.2",

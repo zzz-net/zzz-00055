@@ -4,8 +4,8 @@ const API_BASE = '/api';
 
 class ApiError extends Error {
   status: number;
-  data: any;
-  constructor(message: string, status: number, data?: any) {
+  data: unknown;
+  constructor(message: string, status: number, data?: unknown) {
     super(message);
     this.status = status;
     this.data = data;
@@ -74,6 +74,21 @@ export const api = {
         errors?: ValidationError[];
         message?: string;
       }>('/import/rectification', {
+        method: 'POST',
+        body: formData,
+        headers: {},
+      });
+    },
+    fullData: (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return request<{
+        success: boolean;
+        message: string;
+        configVersion?: string;
+        historyCount?: number;
+        warnings?: string[];
+      }>('/import/full', {
         method: 'POST',
         body: formData,
         headers: {},
