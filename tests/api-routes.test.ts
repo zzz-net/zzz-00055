@@ -881,7 +881,35 @@ describe('API 路由一致性测试（文档 vs 实际路由）', () => {
       assert.equal(latest.distanceThreshold.after, 5.0);
     });
 
+    it('重置时未传 updatedBy 则默认 operator 为 admin', async () => {
+      const saveBody = JSON.stringify({
+        distanceThreshold: 20.0,
+        levelMapping: [
+          { severity: 'critical', level: '一级', color: '#ef4444' },
+          { severity: 'major', level: '二级', color: '#f59e0b' },
+          { severity: 'medium', level: '三级', color: '#10b981' },
+          { severity: 'minor', level: '四级', color: '#6366f1' },
+        ],
+        updatedBy: '临时操作员',
+      });
+      await httpRequest(HOST, PORT, '/api/config', 'PUT', saveBody, 'application/json');
+
+      const res = await httpRequest(HOST, PORT, '/api/config/reset', 'POST', '{}', 'application/json');
+      assert.equal(res.status, 200);
+      const result = JSON.parse(res.body);
+      assert.equal(result.success, true);
+      assert.equal(result.config.updatedBy, 'admin');
+
+      const historyRes = await httpRequest(HOST, PORT, '/api/config/history', 'GET');
+      const history = JSON.parse(historyRes.body);
+      const latest = history[0];
+      assert.equal(latest.operator, 'admin');
+    });
+
     it('重置后再次重置应跳过', async () => {
+      const historyBefore = await httpRequest(HOST, PORT, '/api/config/history', 'GET');
+      const countBefore = JSON.parse(historyBefore.body).length;
+
       const res = await httpRequest(HOST, PORT, '/api/config/reset', 'POST', '{}', 'application/json');
       const result = JSON.parse(res.body);
       assert.equal(result.success, true);
@@ -889,7 +917,7 @@ describe('API 路由一致性测试（文档 vs 实际路由）', () => {
 
       const historyRes = await httpRequest(HOST, PORT, '/api/config/history', 'GET');
       const history = JSON.parse(historyRes.body);
-      assert.equal(history.length, 2, '历史记录不应增加');
+      assert.equal(history.length, countBefore, '历史记录不应增加');
     });
 
     it('历史记录最多保留 10 条', async () => {
@@ -987,6 +1015,323 @@ describe('API 路由一致性测试（文档 vs 实际路由）', () => {
       assert.ok(data.summary);
       assert.ok(Array.isArray(data.configHistory));
       assert.ok('config' in data);
+    });
+  });
+
+  describe('5.7 并发冲突控制', () => {
+    before(async () => {
+      const dbModule = await import('../api/models/db.js');
+      const db = dbModule.db;
+      const saveDb = dbModule.saveDb;
+      await db.read();
+      db.data.configHistory = [];
+      db.data.config.version = '1.0.0';
+      db.data.config.distanceThreshold = 5.0;
+      db.data.config.levelMapping = [
+        { severity: 'critical', level: '一级', color: '#ef4444' },
+        { severity: 'major', level: '二级', color: '#f59e0b' },
+        { severity: 'medium', level: '三级', color: '#10b981' },
+        { severity: 'minor', level: '四级', color: '#6366f1' },
+      ];
+      await saveDb();
+    });
+
+    it('不带 expectedVersion 正常保存成功', async () => {
+      const body = JSON.stringify({
+        distanceThreshold: 8.0,
+        levelMapping: [
+          { severity: 'critical', level: '一级', color: '#ef4444' },
+          { severity: 'major', level: '二级', color: '#f59e0b' },
+          { severity: 'medium', level: '三级', color: '#10b981' },
+          { severity: 'minor', level: '四级', color: '#6366f1' },
+        ],
+        updatedBy: '用户A',
+      });
+      const res = await httpRequest(HOST, PORT, '/api/config', 'PUT', body, 'application/json');
+      assert.equal(res.status, 200);
+      const result = JSON.parse(res.body);
+      assert.equal(result.success, true);
+    });
+
+    it('带匹配的 expectedVersion 保存成功', async () => {
+      const configRes = await httpRequest(HOST, PORT, '/api/config', 'GET');
+      const currentConfig = JSON.parse(configRes.body);
+
+      const body = JSON.stringify({
+        distanceThreshold: 12.0,
+        levelMapping: [
+          { severity: 'critical', level: '一级', color: '#ef4444' },
+          { severity: 'major', level: '二级', color: '#f59e0b' },
+          { severity: 'medium', level: '三级', color: '#10b981' },
+          { severity: 'minor', level: '四级', color: '#6366f1' },
+        ],
+        updatedBy: '用户B',
+        expectedVersion: currentConfig.version,
+      });
+      const res = await httpRequest(HOST, PORT, '/api/config', 'PUT', body, 'application/json');
+      assert.equal(res.status, 200);
+      const result = JSON.parse(res.body);
+      assert.equal(result.success, true);
+    });
+
+    it('expectedVersion 不匹配时返回 409 冲突', async () => {
+      const body = JSON.stringify({
+        distanceThreshold: 15.0,
+        levelMapping: [
+          { severity: 'critical', level: '一级', color: '#ef4444' },
+          { severity: 'major', level: '二级', color: '#f59e0b' },
+          { severity: 'medium', level: '三级', color: '#10b981' },
+          { severity: 'minor', level: '四级', color: '#6366f1' },
+        ],
+        updatedBy: '用户C',
+        expectedVersion: '1.0.0',
+      });
+      const res = await httpRequest(HOST, PORT, '/api/config', 'PUT', body, 'application/json');
+      assert.equal(res.status, 409);
+      const result = JSON.parse(res.body);
+      assert.equal(result.success, false);
+      assert.equal(result.conflict, true);
+      assert.ok(result.currentVersion);
+      assert.ok(result.currentConfig);
+      assert.ok(result.message.includes('已被他人修改'));
+    });
+
+    it('冲突后强制覆盖保存成功，历史记录为 force_save', async () => {
+      const configRes = await httpRequest(HOST, PORT, '/api/config', 'GET');
+      const currentConfig = JSON.parse(configRes.body);
+
+      const body = JSON.stringify({
+        distanceThreshold: 15.0,
+        levelMapping: [
+          { severity: 'critical', level: '一级', color: '#ef4444' },
+          { severity: 'major', level: '二级', color: '#f59e0b' },
+          { severity: 'medium', level: '三级', color: '#10b981' },
+          { severity: 'minor', level: '四级', color: '#6366f1' },
+        ],
+        updatedBy: '用户C',
+        expectedVersion: '1.0.0',
+        force: true,
+      });
+      const res = await httpRequest(HOST, PORT, '/api/config', 'PUT', body, 'application/json');
+      assert.equal(res.status, 200);
+      const result = JSON.parse(res.body);
+      assert.equal(result.success, true);
+      assert.ok(result.message.includes('强制'));
+
+      const historyRes = await httpRequest(HOST, PORT, '/api/config/history', 'GET');
+      const history = JSON.parse(historyRes.body);
+      const latest = history[0];
+      assert.equal(latest.action, 'force_save');
+      assert.equal(latest.operator, '用户C');
+      assert.ok(latest.conflictNote);
+      assert.ok(latest.conflictNote.includes('覆盖冲突'));
+    });
+
+    it('重置时 expectedVersion 不匹配返回 409', async () => {
+      const body = JSON.stringify({
+        updatedBy: '用户D',
+        expectedVersion: '1.0.0',
+      });
+      const res = await httpRequest(HOST, PORT, '/api/config/reset', 'POST', body, 'application/json');
+      assert.equal(res.status, 409);
+      const result = JSON.parse(res.body);
+      assert.equal(result.conflict, true);
+    });
+
+    it('重置时 force=true 可强制覆盖', async () => {
+      const body = JSON.stringify({
+        updatedBy: '用户D',
+        expectedVersion: '1.0.0',
+        force: true,
+      });
+      const res = await httpRequest(HOST, PORT, '/api/config/reset', 'POST', body, 'application/json');
+      assert.equal(res.status, 200);
+      const result = JSON.parse(res.body);
+      assert.equal(result.success, true);
+
+      const historyRes = await httpRequest(HOST, PORT, '/api/config/history', 'GET');
+      const history = JSON.parse(historyRes.body);
+      const latest = history[0];
+      assert.equal(latest.action, 'force_save');
+      assert.ok(latest.conflictNote);
+    });
+  });
+
+  describe('5.8 配置历史 CSV 导出', () => {
+    it('GET /api/config/history/csv 返回 CSV 格式', async () => {
+      const res = await httpRequest(HOST, PORT, '/api/config/history/csv', 'GET');
+      assert.equal(res.status, 200);
+      const contentType = res.headers['content-type'] as string;
+      assert.ok(contentType.includes('text/csv'));
+      assert.ok(res.body.startsWith('\uFEFF'), 'CSV 应以 BOM 开头');
+      assert.ok(res.body.includes('id,version,action,operator,operatedAt'));
+      assert.ok(res.body.includes('distanceThresholdBefore'));
+      assert.ok(res.body.includes('levelMappingBefore'));
+    });
+
+    it('CSV 包含 force_save 类型的记录和 conflictNote', async () => {
+      const res = await httpRequest(HOST, PORT, '/api/config/history/csv', 'GET');
+      assert.equal(res.status, 200);
+      assert.ok(res.body.includes('force_save'));
+      assert.ok(res.body.includes('覆盖冲突'));
+    });
+  });
+
+  describe('5.9 完整数据导入（含配置历史）', () => {
+    it('POST /api/import/full 导入包含 configHistory 的完整数据', async () => {
+      const fullRes = await httpRequest(HOST, PORT, '/api/export/full/json', 'GET');
+      const fullData = JSON.parse(fullRes.body);
+      assert.ok(fullData.configHistory.length > 0, '导出应有配置历史');
+
+      const exportBeforeCount = fullData.configHistory.length;
+
+      const boundary = `----ImportBoundary${Date.now()}`;
+      const fileContent = Buffer.from(JSON.stringify(fullData), 'utf-8');
+      const preamble = Buffer.from(
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="file"; filename="full_data.json"\r\n` +
+        `Content-Type: application/json\r\n` +
+        `\r\n`
+      );
+      const epilogue = Buffer.from(`\r\n--${boundary}--\r\n`);
+      const totalLength = preamble.length + fileContent.length + epilogue.length;
+
+      const options: http.RequestOptions = {
+        hostname: HOST,
+        port: PORT,
+        path: '/api/import/full',
+        method: 'POST',
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${boundary}`,
+          'Content-Length': totalLength,
+        },
+      };
+
+      const importResult = await new Promise<{ status: number; body: string }>((resolve, reject) => {
+        const req = http.request(options, (res) => {
+          let data = '';
+          res.on('data', (chunk) => { data += chunk; });
+          res.on('end', () => {
+            resolve({ status: res.statusCode || 0, body: data });
+          });
+        });
+        req.on('error', reject);
+        req.write(preamble);
+        req.write(fileContent);
+        req.write(epilogue);
+        req.end();
+      });
+
+      assert.equal(importResult.status, 200);
+      const result = JSON.parse(importResult.body);
+      assert.equal(result.success, true);
+      assert.ok(result.configVersion);
+      assert.equal(result.historyCount, exportBeforeCount);
+    });
+
+    it('导入后配置历史可查询且版本一致', async () => {
+      const configRes = await httpRequest(HOST, PORT, '/api/config', 'GET');
+      const config = JSON.parse(configRes.body);
+
+      const historyRes = await httpRequest(HOST, PORT, '/api/config/history', 'GET');
+      const history = JSON.parse(historyRes.body);
+
+      assert.ok(history.length > 0, '导入后应有配置历史');
+      assert.equal(history[0].version, config.version, '最新历史版本应与当前配置版本一致');
+    });
+
+    it('导入数据缺少 config 字段应返回失败', async () => {
+      const invalidData = { batches: [], points: [] };
+      const boundary = `----ImportBoundary${Date.now()}`;
+      const fileContent = Buffer.from(JSON.stringify(invalidData), 'utf-8');
+      const preamble = Buffer.from(
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="file"; filename="invalid.json"\r\n` +
+        `Content-Type: application/json\r\n` +
+        `\r\n`
+      );
+      const epilogue = Buffer.from(`\r\n--${boundary}--\r\n`);
+      const totalLength = preamble.length + fileContent.length + epilogue.length;
+
+      const options: http.RequestOptions = {
+        hostname: HOST,
+        port: PORT,
+        path: '/api/import/full',
+        method: 'POST',
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${boundary}`,
+          'Content-Length': totalLength,
+        },
+      };
+
+      const importResult = await new Promise<{ status: number; body: string }>((resolve, reject) => {
+        const req = http.request(options, (res) => {
+          let data = '';
+          res.on('data', (chunk) => { data += chunk; });
+          res.on('end', () => {
+            resolve({ status: res.statusCode || 0, body: data });
+          });
+        });
+        req.on('error', reject);
+        req.write(preamble);
+        req.write(fileContent);
+        req.write(epilogue);
+        req.end();
+      });
+
+      const result = JSON.parse(importResult.body);
+      assert.equal(result.success, false);
+      assert.ok(result.message.includes('config'));
+    });
+
+    it('导入数据 configHistory 版本与 config 版本不一致时给出警告', async () => {
+      const fullRes = await httpRequest(HOST, PORT, '/api/export/full/json', 'GET');
+      const fullData = JSON.parse(fullRes.body);
+
+      fullData.config.version = '99.99.99';
+
+      const boundary = `----ImportBoundary${Date.now()}`;
+      const fileContent = Buffer.from(JSON.stringify(fullData), 'utf-8');
+      const preamble = Buffer.from(
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="file"; filename="version_mismatch.json"\r\n` +
+        `Content-Type: application/json\r\n` +
+        `\r\n`
+      );
+      const epilogue = Buffer.from(`\r\n--${boundary}--\r\n`);
+      const totalLength = preamble.length + fileContent.length + epilogue.length;
+
+      const options: http.RequestOptions = {
+        hostname: HOST,
+        port: PORT,
+        path: '/api/import/full',
+        method: 'POST',
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${boundary}`,
+          'Content-Length': totalLength,
+        },
+      };
+
+      const importResult = await new Promise<{ status: number; body: string }>((resolve, reject) => {
+        const req = http.request(options, (res) => {
+          let data = '';
+          res.on('data', (chunk) => { data += chunk; });
+          res.on('end', () => {
+            resolve({ status: res.statusCode || 0, body: data });
+          });
+        });
+        req.on('error', reject);
+        req.write(preamble);
+        req.write(fileContent);
+        req.write(epilogue);
+        req.end();
+      });
+
+      assert.equal(importResult.status, 200);
+      const result = JSON.parse(importResult.body);
+      assert.equal(result.success, true);
+      assert.ok(result.warnings && result.warnings.length > 0, '应有版本不一致警告');
+      assert.ok(result.warnings[0].includes('不一致'));
     });
   });
 

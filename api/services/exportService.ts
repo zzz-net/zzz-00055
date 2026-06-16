@@ -189,3 +189,37 @@ export function exportFullDataJSON(): string {
     configHistory: db.data?.configHistory || [],
   }, null, 2);
 }
+
+export function exportConfigHistoryCSV(): string {
+  const history = db.data?.configHistory || [];
+
+  const flattened = history.map(item => {
+    const levelMappingBefore = item.levelMapping.before
+      .sort((a, b) => a.severity.localeCompare(b.severity))
+      .map(m => `${m.severity}:${m.level}:${m.color}`)
+      .join('|');
+    const levelMappingAfter = item.levelMapping.after
+      .sort((a, b) => a.severity.localeCompare(b.severity))
+      .map(m => `${m.severity}:${m.level}:${m.color}`)
+      .join('|');
+
+    return {
+      id: item.id,
+      version: item.version,
+      action: item.action,
+      operator: item.operator,
+      operatedAt: item.operatedAt,
+      conflictNote: item.conflictNote || '',
+      distanceThresholdBefore: item.distanceThreshold.before,
+      distanceThresholdAfter: item.distanceThreshold.after,
+      levelMappingBefore,
+      levelMappingAfter,
+    };
+  });
+
+  return toCSV(flattened, [
+    'id', 'version', 'action', 'operator', 'operatedAt', 'conflictNote',
+    'distanceThresholdBefore', 'distanceThresholdAfter',
+    'levelMappingBefore', 'levelMappingAfter',
+  ]);
+}

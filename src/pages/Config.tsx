@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, Ruler, Palette, RotateCcw, Save, History, ArrowRight } from 'lucide-react';
+import { Settings, Ruler, Palette, RotateCcw, Save, History, ArrowRight, AlertTriangle, Download } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { api } from '../api/client';
 import { useToast } from '../components/common/Toast';
@@ -50,7 +50,21 @@ export function Config() {
     });
   };
 
-  const handleSave = async () => {
+  const handleConflict = (errorData: { message?: string; currentVersion?: string; currentConfig?: any }, retryFn: (force: boolean) => Promise<void>) => {
+    const msg = errorData.message || '配置已被他人修改';
+    const doForce = confirm(
+      `${msg}\n\n点击"确定"强制覆盖当前配置，点击"取消"放弃本次修改并刷新页面。`
+    );
+    if (doForce) {
+      retryFn(true);
+    } else {
+      loadConfig();
+      loadConfigHistory();
+      addToast('info', '已刷新为最新配置');
+    }
+  };
+
+  const handleSave = async (force = false) => {
     if (distanceThreshold <= 0) {
       addToast('error', '距离阈值必须大于0');
       return;
@@ -66,6 +80,8 @@ export function Config() {
         distanceThreshold,
         levelMapping,
         updatedBy: operator || 'admin',
+        expectedVersion: config?.version,
+        force,
       });
       if (result.success) {
         updateStoreConfig(result.config);
@@ -77,17 +93,21 @@ export function Config() {
         await loadConfigHistory();
       }
     } catch (e: any) {
-      addToast('error', e.message || '保存失败');
+      if (e.status === 409 && e.data) {
+        handleConflict(e.data, (f) => handleSave(f));
+      } else {
+        addToast('error', e.message || '保存失败');
+      }
     } finally {
       setSaving(false);
     }
   };
 
-  const handleReset = async () => {
-    if (!confirm('确定要重置为默认配置吗？')) return;
+  const handleReset = async (force = false) => {
+    if (!force && !confirm('确定要重置为默认配置吗？')) return;
     setSaving(true);
     try {
-      const result = await api.config.reset();
+      const result = await api.config.reset(operator || 'admin', config?.version, force);
       if (result.success) {
         updateStoreConfig(result.config);
         if (result.skipped) {
@@ -98,7 +118,11 @@ export function Config() {
         await loadConfigHistory();
       }
     } catch (e: any) {
-      addToast('error', e.message || '重置失败');
+      if (e.status === 409 && e.data) {
+        handleConflict(e.data, (f) => handleReset(f));
+      } else {
+        addToast('error', e.message || '重置失败');
+      }
     } finally {
       setSaving(false);
     }
@@ -287,7 +311,7 @@ export function Config() {
               重置默认
             </button>
             <button
-              onClick={handleSave}
+              onClick={() => handleSave()}
               disabled={saving}
               className="flex items-center gap-2 px-6 py-2 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded font-medium transition-colors"
             >
@@ -308,9 +332,18 @@ export function Config() {
             <History size={20} className="text-primary-400" />
             配置历史记录
           </h2>
-          <span className="text-sm text-slate-400">
-            最近 {configHistory.length} 条变更
-          </span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => api.config.historyCSV()}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs rounded font-medium transition-colors"
+            >
+              <Download size={14} />
+              导出CSV
+            </button>
+            <span className="text-sm text-slate-400">
+              最近 {configHistory.length} 条变更
+            </span>
+          </div>
         </div>
 
         {loading.configHistory ? (
@@ -335,11 +368,14 @@ export function Config() {
   );
 }
 
+const ACTION_CONFIG: Record<string, { label: string; class: string }> = {
+  save: { label: '保存', class: 'bg-green-900/50 text-green-400 border-green-700' },
+  reset: { label: '重置', class: 'bg-amber-900/50 text-amber-400 border-amber-700' },
+  force_save: { label: '强制覆盖', class: 'bg-red-900/50 text-red-400 border-red-700' },
+};
+
 function HistoryItem({ item }: { item: ConfigHistory }) {
-  const actionLabel = item.action === 'save' ? '保存' : '重置';
-  const actionClass = item.action === 'save' 
-    ? 'bg-green-900/50 text-green-400 border-green-700' 
-    : 'bg-amber-900/50 text-amber-400 border-amber-700';
+  const actionCfg = ACTION_CONFIG[item.action] || ACTION_CONFIG.save;
 
   const formatTime = (isoString: string) => {
     const date = new Date(isoString);
@@ -373,8 +409,8 @@ function HistoryItem({ item }: { item: ConfigHistory }) {
     <div className="bg-slate-900 rounded-lg p-4 border border-slate-700 hover:border-slate-600 transition-colors">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <span className={`px-2 py-1 text-xs font-medium rounded border ${actionClass}`}>
-            {actionLabel}
+          <span className={`px-2 py-1 text-xs font-medium rounded border ${actionCfg.class}`}>
+            {actionCfg.label}
           </span>
           <span className="text-primary-400 font-mono text-sm">v{item.version}</span>
         </div>
@@ -383,6 +419,13 @@ function HistoryItem({ item }: { item: ConfigHistory }) {
           <p className="text-xs text-slate-500">{formatTime(item.operatedAt)}</p>
         </div>
       </div>
+
+      {item.conflictNote && (
+        <div className="flex items-start gap-2 mb-3 p-2 bg-red-950/40 border border-red-800/50 rounded text-xs">
+          <AlertTriangle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
+          <span className="text-red-300">{item.conflictNote}</span>
+        </div>
+      )}
 
       <div className="space-y-3">
         <div className="flex items-center gap-2 text-sm">

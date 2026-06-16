@@ -2,6 +2,16 @@ import { Batch, Event, Config, EventStatus, ValidationError, EventDetailResponse
 
 const API_BASE = '/api';
 
+class ApiError extends Error {
+  status: number;
+  data: any;
+  constructor(message: string, status: number, data?: any) {
+    super(message);
+    this.status = status;
+    this.data = data;
+  }
+}
+
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${url}`, {
     headers: {
@@ -13,7 +23,7 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: '请求失败' }));
-    throw new Error(error.message || `HTTP ${response.status}`);
+    throw new ApiError(error.message || `HTTP ${response.status}`, response.status, error);
   }
   
   return response.json();
@@ -98,15 +108,19 @@ export const api = {
       const query = limit ? `?limit=${limit}` : '';
       return request<ConfigHistory[]>(`/config/history${query}`);
     },
-    update: (config: Partial<Config>) =>
-      request<{ success: boolean; config: Config; skipped?: boolean; message?: string }>('/config', {
+    update: (config: Partial<Config> & { expectedVersion?: string; force?: boolean }) =>
+      request<{ success: boolean; config: Config; skipped?: boolean; message?: string; conflict?: boolean; currentVersion?: string; currentConfig?: Config }>('/config', {
         method: 'PUT',
         body: JSON.stringify(config),
       }),
-    reset: () =>
-      request<{ success: boolean; config: Config; skipped?: boolean; message?: string }>('/config/reset', {
+    reset: (updatedBy?: string, expectedVersion?: string, force?: boolean) =>
+      request<{ success: boolean; config: Config; skipped?: boolean; message?: string; conflict?: boolean; currentVersion?: string; currentConfig?: Config }>('/config/reset', {
         method: 'POST',
+        body: JSON.stringify({ updatedBy, expectedVersion, force }),
       }),
+    historyCSV: () => {
+      window.open(`${API_BASE}/config/history/csv`, '_blank');
+    },
   },
   
   export: {

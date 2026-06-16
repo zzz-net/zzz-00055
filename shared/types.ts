@@ -94,7 +94,7 @@ export interface OperationLog {
   operatedAt: string;
 }
 
-export type ConfigHistoryAction = 'save' | 'reset';
+export type ConfigHistoryAction = 'save' | 'reset' | 'force_save';
 
 export interface ConfigHistory {
   id: string;
@@ -102,6 +102,7 @@ export interface ConfigHistory {
   action: ConfigHistoryAction;
   operator: string;
   operatedAt: string;
+  conflictNote?: string;
   distanceThreshold: {
     before: number;
     after: number;

@@ -4,6 +4,7 @@ import { validateConfig } from '../utils/validators.js';
 import { DEFAULT_CONFIG } from '../../shared/types.js';
 import { recalculateAllEvents } from '../services/defectMergeService.js';
 import { addConfigHistory, shouldCreateHistory, getConfigHistory } from '../services/configHistoryService.js';
+import { exportConfigHistoryCSV } from '../services/exportService.js';
 
 const router = Router();
 
@@ -16,6 +17,14 @@ router.get('/history', async (req, res) => {
   await db.read();
   const limit = parseInt(req.query.limit as string) || 10;
   res.json(getConfigHistory(limit));
+});
+
+router.get('/history/csv', (_req, res) => {
+  const csv = exportConfigHistoryCSV();
+
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="config_history_${Date.now()}.csv"`);
+  res.send('\uFEFF' + csv);
 });
 
 router.put('/', async (req, res) => {
@@ -46,9 +55,24 @@ router.put('/', async (req, res) => {
       });
     }
 
+    const expectedVersion = req.body.expectedVersion;
+    const force = req.body.force === true;
     const currentVersion = db.data.config.version;
+
+    if (!force && expectedVersion && expectedVersion !== currentVersion) {
+      return res.status(409).json({
+        success: false,
+        conflict: true,
+        currentVersion,
+        expectedVersion,
+        currentConfig: db.data.config,
+        message: `配置已被他人修改（当前版本 v${currentVersion}，您基于的版本 v${expectedVersion}），请确认后选择强制覆盖或刷新`,
+      });
+    }
+
     const [major, minor, patch] = currentVersion.split('.').map(Number);
     const operator = req.body.updatedBy || 'admin';
+    const isForceSave = force && expectedVersion && expectedVersion !== currentVersion;
 
     db.data.config = {
       ...req.body,
@@ -58,7 +82,12 @@ router.put('/', async (req, res) => {
       updatedBy: operator,
     };
 
-    addConfigHistory(oldConfig, db.data.config, 'save', operator);
+    const action = isForceSave ? 'force_save' : 'save';
+    const conflictNote = isForceSave
+      ? `覆盖冲突：基于版本 v${expectedVersion} 强制覆盖当前版本 v${currentVersion}`
+      : undefined;
+
+    addConfigHistory(oldConfig, db.data.config, action, operator, conflictNote);
 
     await saveDb();
 
@@ -69,7 +98,7 @@ router.put('/', async (req, res) => {
       config: db.data.config,
       recalculated: recalcResult,
       skipped: false,
-      message: '配置保存成功',
+      message: isForceSave ? '配置已强制覆盖保存' : '配置保存成功',
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
@@ -99,7 +128,23 @@ router.post('/reset', async (req, res) => {
       });
     }
 
+    const expectedVersion = req.body?.expectedVersion;
+    const force = req.body?.force === true;
+    const currentVersion = db.data.config.version;
+
+    if (!force && expectedVersion && expectedVersion !== currentVersion) {
+      return res.status(409).json({
+        success: false,
+        conflict: true,
+        currentVersion,
+        expectedVersion,
+        currentConfig: db.data.config,
+        message: `配置已被他人修改（当前版本 v${currentVersion}，您基于的版本 v${expectedVersion}），请确认后选择强制重置或刷新`,
+      });
+    }
+
     const operator = req.body?.updatedBy || 'admin';
+    const isForceReset = force && expectedVersion && expectedVersion !== currentVersion;
 
     db.data.config = {
       ...DEFAULT_CONFIG,
@@ -107,7 +152,12 @@ router.post('/reset', async (req, res) => {
       updatedBy: operator,
     };
 
-    addConfigHistory(oldConfig, db.data.config, 'reset', operator);
+    const action = isForceReset ? 'force_save' : 'reset';
+    const conflictNote = isForceReset
+      ? `覆盖冲突：基于版本 v${expectedVersion} 强制重置覆盖当前版本 v${currentVersion}`
+      : undefined;
+
+    addConfigHistory(oldConfig, db.data.config, action, operator, conflictNote);
 
     await saveDb();
 
@@ -118,7 +168,7 @@ router.post('/reset', async (req, res) => {
       config: db.data.config,
       recalculated: recalcResult,
       skipped: false,
-      message: '配置重置成功',
+      message: isForceReset ? '配置已强制重置' : '配置重置成功',
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
