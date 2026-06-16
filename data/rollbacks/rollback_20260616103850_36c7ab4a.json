@@ -476,96 +476,11 @@
       }
     ],
     "version": "1.0.0",
-    "updatedAt": "2026-06-16T10:40:57.851Z",
-    "updatedBy": "reviewer-admin"
+    "updatedAt": "2026-06-16T10:23:33.179Z",
+    "updatedBy": "system"
   },
-  "configHistory": [
-    {
-      "id": "7b944438-97ad-47ed-993a-32cb5d1869d7",
-      "version": "1.0.0",
-      "action": "import",
-      "operator": "reviewer-admin",
-      "operatedAt": "2026-06-16T10:40:57.851Z",
-      "result": "success",
-      "trigger": "import",
-      "message": "从备份 上传的备份 恢复数据，配置版本 v1.0.0",
-      "distanceThreshold": {
-        "before": 5,
-        "after": 5
-      },
-      "levelMapping": {
-        "before": [
-          {
-            "severity": "critical",
-            "level": "一级",
-            "color": "#ef4444"
-          },
-          {
-            "severity": "major",
-            "level": "二级",
-            "color": "#f59e0b"
-          },
-          {
-            "severity": "medium",
-            "level": "三级",
-            "color": "#10b981"
-          },
-          {
-            "severity": "minor",
-            "level": "四级",
-            "color": "#6366f1"
-          }
-        ],
-        "after": [
-          {
-            "severity": "critical",
-            "level": "一级",
-            "color": "#ef4444"
-          },
-          {
-            "severity": "major",
-            "level": "二级",
-            "color": "#f59e0b"
-          },
-          {
-            "severity": "medium",
-            "level": "三级",
-            "color": "#10b981"
-          },
-          {
-            "severity": "minor",
-            "level": "四级",
-            "color": "#6366f1"
-          }
-        ]
-      }
-    }
-  ],
+  "configHistory": [],
   "backups": [
-    {
-      "id": "677ee80d-c5d6-4969-b011-60d57b149ecc",
-      "name": "导入_reviewer_backup_manual_63175711_2026-06-16",
-      "description": "从页面上传的备份，原始文件名：reviewer_backup_manual_63175711.json",
-      "createdAt": "2026-06-16T10:38:49.980Z",
-      "createdBy": "system",
-      "configVersion": "1.0.0",
-      "dataVersion": 1,
-      "fileSize": 15736,
-      "recordCounts": {
-        "batches": 2,
-        "points": 12,
-        "defects": 8,
-        "rectifications": 0,
-        "events": 5,
-        "operationLogs": 2,
-        "configHistory": 0
-      },
-      "filePath": "D:\\workSpace\\AI__SPACE\\zzz-00055\\data\\uploads\\backups\\1781606457730-33sls2-reviewer_backup_manual_63175711.json",
-      "status": "restored",
-      "checksum": "e1c5bbc0db9792ebcd2073d8d6d94ddb10655c21f5a4a1b5c7212330e4fbb55f",
-      "restoredAt": "2026-06-16T10:40:57.851Z",
-      "restoredBy": "reviewer-admin"
-    },
     {
       "id": "ae7fb97a-63ab-4339-8029-e342dc423d03",
       "name": "reviewer_backup_manual",
@@ -585,95 +500,11 @@
         "configHistory": 0
       },
       "filePath": "D:\\workSpace\\AI__SPACE\\zzz-00055\\data\\backups\\reviewer_backup_manual_63175711.json",
-      "status": "restored",
-      "checksum": "e1c5bbc0db9792ebcd2073d8d6d94ddb10655c21f5a4a1b5c7212330e4fbb55f",
-      "restoredAt": "2026-06-16T10:38:50.030Z",
-      "restoredBy": "reviewer-admin"
+      "status": "available",
+      "checksum": "e1c5bbc0db9792ebcd2073d8d6d94ddb10655c21f5a4a1b5c7212330e4fbb55f"
     }
   ],
   "auditLogs": [
-    {
-      "id": "6a2b5704-0745-454e-8429-9d3e87885787",
-      "action": "restore_success",
-      "operator": "reviewer-admin",
-      "operatorRole": "admin",
-      "targetBackupId": "677ee80d-c5d6-4969-b011-60d57b149ecc",
-      "detail": {
-        "rollbackPointId": "2cca39a2-d290-4d56-a718-3a06f742279b",
-        "restoredConfigVersion": "1.0.0"
-      },
-      "result": "success",
-      "message": "恢复成功，当前配置版本 v1.0.0。回滚点已创建（24小时内可回滚）",
-      "operatedAt": "2026-06-16T10:40:57.959Z",
-      "ipAddress": "127.0.0.1"
-    },
-    {
-      "id": "9946e768-4f21-4ebc-9b33-1fdede4920bd",
-      "action": "restore_start",
-      "operator": "reviewer-admin",
-      "operatorRole": "admin",
-      "targetBackupId": "677ee80d-c5d6-4969-b011-60d57b149ecc",
-      "detail": {
-        "force": false,
-        "from": "upload"
-      },
-      "result": "success",
-      "message": "开始从上传文件恢复",
-      "operatedAt": "2026-06-16T10:40:57.838Z",
-      "ipAddress": "127.0.0.1"
-    },
-    {
-      "id": "9e0b2eb2-7872-4b04-ad9d-b857c76f4b0c",
-      "action": "backup_upload",
-      "operator": "reviewer-admin",
-      "operatorRole": "admin",
-      "targetBackupId": "677ee80d-c5d6-4969-b011-60d57b149ecc",
-      "targetBackupName": "reviewer_backup_manual_63175711.json",
-      "detail": {
-        "validated": true,
-        "hasConflicts": true
-      },
-      "result": "success",
-      "message": "上传备份成功：reviewer_backup_manual_63175711.json",
-      "operatedAt": "2026-06-16T10:40:57.762Z",
-      "ipAddress": "127.0.0.1"
-    },
-    {
-      "id": "cab6a121-44af-4950-a8f5-86e2ad08a42b",
-      "action": "backup_create",
-      "operator": "reviewer-viewer",
-      "operatorRole": "viewer",
-      "result": "denied",
-      "message": "无权限创建备份",
-      "operatedAt": "2026-06-16T10:39:20.124Z",
-      "ipAddress": "127.0.0.1"
-    },
-    {
-      "id": "0b97ae3a-076e-4585-ade1-e451e4943f59",
-      "action": "backup_upload",
-      "operator": "reviewer-viewer",
-      "operatorRole": "viewer",
-      "result": "denied",
-      "message": "无权限上传备份（仅 admin 可上传恢复）",
-      "operatedAt": "2026-06-16T10:38:50.154Z",
-      "ipAddress": "127.0.0.1"
-    },
-    {
-      "id": "064e0839-41c5-4e00-b65e-020f2b87d67a",
-      "action": "restore_success",
-      "operator": "reviewer-admin",
-      "operatorRole": "admin",
-      "targetBackupId": "ae7fb97a-63ab-4339-8029-e342dc423d03",
-      "targetBackupName": "reviewer_backup_manual",
-      "detail": {
-        "rollbackPointId": "90c39441-b1ca-4407-9391-2efdddc05849",
-        "restoredConfigVersion": "1.0.0"
-      },
-      "result": "success",
-      "message": "恢复成功，当前配置版本 v1.0.0。回滚点已创建（24小时内可回滚）",
-      "operatedAt": "2026-06-16T10:38:50.033Z",
-      "ipAddress": "127.0.0.1"
-    },
     {
       "id": "a038cb80-7837-441d-8e9f-afceeba162b3",
       "action": "restore_start",
@@ -729,40 +560,10 @@
       "ipAddress": "127.0.0.1"
     }
   ],
-  "rollbackPoints": [
-    {
-      "id": "2cca39a2-d290-4d56-a718-3a06f742279b",
-      "name": "恢复前回滚点_20260616104057",
-      "createdAt": "2026-06-16T10:40:57.849Z",
-      "createdBy": "reviewer-admin",
-      "expiresAt": "2026-06-17T10:40:57.849Z",
-      "filePath": "D:\\workSpace\\AI__SPACE\\zzz-00055\\data\\rollbacks\\rollback_20260616104057_928e8f9f.json",
-      "fileSize": 23689,
-      "checksum": "76e4cfb129154d92c5eef6ba9c8f1fb43c5b738849c88e44d9aeea563b483a29",
-      "preRestoreSnapshot": {
-        "configVersion": "1.0.0",
-        "configVersionBefore": "1.0.0",
-        "configVersionAfter": "1.0.0"
-      },
-      "status": "available",
-      "relatedRestoreBackupId": "677ee80d-c5d6-4969-b011-60d57b149ecc"
-    },
-    {
-      "id": "90c39441-b1ca-4407-9391-2efdddc05849",
-      "name": "恢复前回滚点_20260616103850",
-      "createdAt": "2026-06-16T10:38:50.028Z",
-      "createdBy": "reviewer-admin",
-      "expiresAt": "2026-06-17T10:38:50.028Z",
-      "filePath": "D:\\workSpace\\AI__SPACE\\zzz-00055\\data\\rollbacks\\rollback_20260616103850_36c7ab4a.json",
-      "fileSize": 18226,
-      "checksum": "e1c5bbc0db9792ebcd2073d8d6d94ddb10655c21f5a4a1b5c7212330e4fbb55f",
-      "preRestoreSnapshot": {
-        "configVersion": "1.0.0",
-        "configVersionBefore": "1.0.0",
-        "configVersionAfter": "1.0.0"
-      },
-      "status": "available",
-      "relatedRestoreBackupId": "ae7fb97a-63ab-4339-8029-e342dc423d03"
-    }
-  ]
+  "rollbackPoints": [],
+  "_meta": {
+    "dataVersion": 1,
+    "generatedAt": "2026-06-16T10:38:50.027Z",
+    "checksum": "e1c5bbc0db9792ebcd2073d8d6d94ddb10655c21f5a4a1b5c7212330e4fbb55f"
+  }
 }

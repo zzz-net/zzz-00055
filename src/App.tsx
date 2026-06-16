@@ -6,6 +6,7 @@ import { Events } from "./pages/Events";
 import { EventDetail } from "./pages/EventDetail";
 import { Config } from "./pages/Config";
 import { Export } from "./pages/Export";
+import { BackupCenter } from "./pages/BackupCenter";
 import { ToastProvider } from "./components/common/Toast";
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
             <Route path="/events" element={<Events />} />
             <Route path="/events/:id" element={<EventDetail />} />
             <Route path="/config" element={<Config />} />
+            <Route path="/backup" element={<BackupCenter />} />
             <Route path="/export" element={<Export />} />
           </Route>
         </Routes>

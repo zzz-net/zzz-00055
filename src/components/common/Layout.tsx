@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Database, ListTodo, Settings, Download, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Database, ListTodo, Settings, Download, Menu, X, HardDrive } from 'lucide-react';
 
 const navItems = [
   { path: '/', label: '看板', icon: LayoutDashboard },
   { path: '/batches', label: '批次管理', icon: Database },
   { path: '/events', label: '缺陷事件', icon: ListTodo },
   { path: '/config', label: '规则配置', icon: Settings },
+  { path: '/backup', label: '备份恢复中心', icon: HardDrive },
   { path: '/export', label: '数据导出', icon: Download },
 ];
 

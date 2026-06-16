@@ -1339,6 +1339,460 @@ describe('API 路由一致性测试（文档 vs 实际路由）', () => {
     });
   });
 
+  describe('5.10 备份恢复中心（核心链路）', () => {
+    const ADMIN_HEADERS: Record<string, string> = {
+      'x-user-role': 'admin',
+      'x-user-name': 'AdminTest',
+    };
+    const VIEWER_HEADERS: Record<string, string> = {
+      'x-user-role': 'viewer',
+      'x-user-name': 'ViewerWang',
+    };
+    const OPERATOR_HEADERS: Record<string, string> = {
+      'x-user-role': 'operator',
+      'x-user-name': 'OperatorLi',
+    };
+
+    function httpRequestWithHeaders(
+      path: string,
+      method: string,
+      headers: Record<string, string>,
+      body?: string,
+      contentType?: string
+    ): Promise<{ status: number; body: string }> {
+      return new Promise((resolve, reject) => {
+        const mergedHeaders: Record<string, string> = { ...headers };
+        const options: http.RequestOptions = {
+          hostname: HOST,
+          port: PORT,
+          path,
+          method,
+          headers: mergedHeaders,
+        };
+        if (body && contentType) {
+          mergedHeaders['Content-Type'] = contentType;
+          mergedHeaders['Content-Length'] = Buffer.byteLength(body).toString();
+        }
+        const req = http.request(options, (res) => {
+          let data = '';
+          res.on('data', (chunk) => { data += chunk; });
+          res.on('end', () => resolve({ status: res.statusCode || 0, body: data }));
+        });
+        req.on('error', reject);
+        if (body) req.write(body);
+        req.end();
+      });
+    }
+
+    function uploadBackupFile(
+      fileContent: Buffer,
+      filename: string,
+      headers: Record<string, string>
+    ): Promise<{ status: number; body: string }> {
+      return new Promise((resolve, reject) => {
+        const boundary = `----BackupUpload${Date.now()}`;
+        const preamble = Buffer.from(
+          `--${boundary}\r\n` +
+          `Content-Disposition: form-data; name="file"; filename="${filename}"\r\n` +
+          `Content-Type: application/json\r\n` +
+          `\r\n`
+        );
+        const epilogue = Buffer.from(`\r\n--${boundary}--\r\n`);
+        const totalLength = preamble.length + fileContent.length + epilogue.length;
+        const options: http.RequestOptions = {
+          hostname: HOST,
+          port: PORT,
+          path: '/api/backup/upload',
+          method: 'POST',
+          headers: {
+            ...headers,
+            'Content-Type': `multipart/form-data; boundary=${boundary}`,
+            'Content-Length': totalLength.toString(),
+          },
+        };
+        const req = http.request(options, (res) => {
+          let data = '';
+          res.on('data', (chunk) => { data += chunk; });
+          res.on('end', () => resolve({ status: res.statusCode || 0, body: data }));
+        });
+        req.on('error', reject);
+        req.write(preamble);
+        req.write(fileContent);
+        req.write(epilogue);
+        req.end();
+      });
+    }
+
+    before(async () => {
+      const dbModule = await import('../api/models/db.js');
+      const db = dbModule.db;
+      const saveDb = dbModule.saveDb;
+      await db.read();
+      db.data.configHistory = [];
+      db.data.config.version = '2.0.0';
+      db.data.config.distanceThreshold = 7.5;
+      db.data.backups = [];
+      db.data.auditLogs = [];
+      db.data.rollbackPoints = [];
+      await saveDb();
+    });
+
+    it('5.10.1 GET /api/backup/permissions/check 返回权限结构', async () => {
+      const res = await httpRequestWithHeaders(
+        '/api/backup/permissions/check', 'GET', ADMIN_HEADERS
+      );
+      assert.equal(res.status, 200);
+      const data = JSON.parse(res.body);
+      assert.equal(data.success, true);
+      assert.equal(data.user.role, 'admin');
+      assert.equal(data.permissions.canRestore, true);
+      assert.equal(data.permissions.canRollback, true);
+      assert.equal(data.permissions.canDelete, true);
+    });
+
+    it('5.10.2 viewer 角色权限检查：canRestore=false', async () => {
+      const res = await httpRequestWithHeaders(
+        '/api/backup/permissions/check', 'GET', VIEWER_HEADERS
+      );
+      const data = JSON.parse(res.body);
+      assert.equal(data.permissions.canRestore, false);
+      assert.equal(data.permissions.canRollback, false);
+      assert.equal(data.permissions.canDelete, false);
+      assert.equal(data.permissions.canView, true);
+    });
+
+    it('5.10.3 POST /api/backup/create 创建完整备份', async () => {
+      const body = JSON.stringify({
+        name: '测试备份_20260616',
+        description: 'API测试自动生成的备份',
+      });
+      const res = await httpRequestWithHeaders(
+        '/api/backup/create', 'POST', ADMIN_HEADERS, body, 'application/json'
+      );
+      assert.equal(res.status, 200);
+      const data = JSON.parse(res.body);
+      assert.equal(data.success, true);
+      assert.ok(data.backup);
+      assert.equal(data.backup.name, '测试备份_20260616');
+      assert.equal(data.backup.createdBy, 'AdminTest');
+      assert.equal(data.backup.status, 'available');
+      assert.ok(/^\d+\.\d+\.\d+$/.test(data.backup.configVersion), 'configVersion 应是语义化版本号 (x.y.z)');
+      assert.ok(data.backup.checksum && data.backup.checksum.length === 64);
+      assert.ok(data.backup.recordCounts);
+    });
+
+    it('5.10.4 创建备份后 GET /api/backup 返回列表', async () => {
+      const res = await httpRequestWithHeaders('/api/backup', 'GET', ADMIN_HEADERS);
+      assert.equal(res.status, 200);
+      const data = JSON.parse(res.body);
+      assert.equal(data.success, true);
+      assert.ok(Array.isArray(data.backups));
+      assert.ok(data.backups.length >= 1);
+      assert.equal(data.backups[0].name, '测试备份_20260616');
+    });
+
+    it('5.10.5 GET /api/backup/:id/download 能下载备份（200/非空body）', async () => {
+      const listRes = await httpRequestWithHeaders('/api/backup', 'GET', ADMIN_HEADERS);
+      const backupId = JSON.parse(listRes.body).backups[0].id;
+      const res = await new Promise<{ status: number; body: string; headers: Record<string, string | string[]> }>((resolve, reject) => {
+        const options: http.RequestOptions = {
+          hostname: HOST, port: PORT,
+          path: `/api/backup/${backupId}/download`,
+          method: 'GET',
+          headers: { ...ADMIN_HEADERS },
+        };
+        const req = http.request(options, (res) => {
+          let data = '';
+          res.on('data', (chunk) => { data += chunk; });
+          res.on('end', () => resolve({
+            status: res.statusCode || 0,
+            body: data,
+            headers: res.headers as Record<string, string | string[]>,
+          }));
+        });
+        req.on('error', reject);
+        req.end();
+      });
+      assert.equal(res.status, 200);
+      assert.ok(res.body.length > 100, '下载内容不应为空');
+      assert.ok((res.headers['content-type'] as string).includes('application/json'));
+      const parsed = JSON.parse(res.body);
+      assert.ok(parsed.config);
+      assert.ok(parsed._meta);
+      assert.ok(parsed._meta.checksum);
+    });
+
+    it('5.10.6 viewer 角色无法上传备份：返回 403', async () => {
+      const testContent = Buffer.from(JSON.stringify({
+        config: { version: '1.0.0' },
+        batches: [], points: [], defects: [], rectifications: [],
+        events: [], operationLogs: [], configHistory: [],
+      }), 'utf-8');
+      const res = await uploadBackupFile(testContent, 'viewer_test.json', VIEWER_HEADERS);
+      assert.equal(res.status, 403);
+      const data = JSON.parse(res.body);
+      assert.equal(data.success, false);
+      assert.ok(data.error.includes('admin'));
+    });
+
+    it('5.10.7 上传损坏的 JSON 文件应返回失败', async () => {
+      const invalidJson = Buffer.from('{this is not valid json{{{', 'utf-8');
+      const res = await uploadBackupFile(invalidJson, 'broken.json', ADMIN_HEADERS);
+      assert.equal(res.status, 400);
+      const data = JSON.parse(res.body);
+      assert.equal(data.success, false);
+    });
+
+    it('5.10.8 上传缺少 config 字段的备份应校验失败', async () => {
+      const incomplete = Buffer.from(JSON.stringify({
+        batches: [], points: [],
+      }), 'utf-8');
+      const res = await uploadBackupFile(incomplete, 'no_config.json', ADMIN_HEADERS);
+      assert.equal(res.status, 200);
+      const data = JSON.parse(res.body);
+      assert.equal(data.success, false);
+      assert.ok(data.preview);
+      assert.equal(data.preview.validated.valid, false);
+      assert.ok(
+        (data.preview.validated.errors || []).some((e: string) => e.includes('缺少') || e.includes('config'))
+        || (data.preview.validated.summary || '').includes('结构不完整')
+      );
+    });
+
+    it('5.10.9 POST /api/backup/preview/:id 预览差异返回正确结构', async () => {
+      const listRes = await httpRequestWithHeaders('/api/backup', 'GET', ADMIN_HEADERS);
+      const backupId = JSON.parse(listRes.body).backups[0].id;
+      const res = await httpRequestWithHeaders(
+        `/api/backup/preview/${backupId}`, 'POST', ADMIN_HEADERS
+      );
+      assert.equal(res.status, 200);
+      const data = JSON.parse(res.body);
+      assert.equal(data.success, true);
+      assert.ok(data.preview);
+      assert.ok(Array.isArray(data.preview.diff));
+      assert.ok(data.preview.diff.some((d: any) => d.section === 'config'));
+      assert.ok(data.preview.diff.some((d: any) => d.section === 'record_counts'));
+      assert.equal(data.preview.canRestore, true);
+    });
+
+    it('5.10.10 正常恢复成功：生成回滚点 + 版本保持 + 审计日志', async () => {
+      const listRes = await httpRequestWithHeaders('/api/backup', 'GET', ADMIN_HEADERS);
+      const backupId = JSON.parse(listRes.body).backups[0].id;
+
+      const configBefore = JSON.parse((await httpRequestWithHeaders(
+        '/api/config', 'GET', ADMIN_HEADERS
+      )).body);
+
+      const res = await httpRequestWithHeaders(
+        `/api/backup/restore/${backupId}`, 'POST', ADMIN_HEADERS,
+        JSON.stringify({ force: false }), 'application/json'
+      );
+      assert.equal(res.status, 200);
+      const result = JSON.parse(res.body);
+      assert.equal(result.success, true);
+      assert.ok(result.rollbackPointId);
+      assert.ok(result.restoredConfigVersion);
+      assert.ok(result.message.includes('成功'));
+      assert.ok(result.details);
+      assert.ok(result.details.durationMs >= 0);
+
+      const configAfter = JSON.parse((await httpRequestWithHeaders(
+        '/api/config', 'GET', ADMIN_HEADERS
+      )).body);
+      assert.equal(configAfter.version, configBefore.version, '同版本恢复版本号不应下降');
+      assert.equal(configAfter.updatedBy, 'AdminTest');
+
+      const rbRes = await httpRequestWithHeaders(
+        '/api/backup/rollback/list', 'GET', ADMIN_HEADERS
+      );
+      const rbData = JSON.parse(rbRes.body);
+      assert.equal(rbData.success, true);
+      assert.ok(rbData.rollbackPoints.length >= 1);
+      const latestRb = rbData.rollbackPoints.find((r: any) => r.id === result.rollbackPointId);
+      assert.ok(latestRb);
+      assert.equal(latestRb.status, 'available');
+      assert.ok(latestRb.preRestoreSnapshot);
+
+      const auditRes = await httpRequestWithHeaders(
+        '/api/backup/audit/logs?limit=50', 'GET', ADMIN_HEADERS
+      );
+      const audit = JSON.parse(auditRes.body);
+      assert.equal(audit.success, true);
+      const restoreSuccessLog = audit.logs.find((l: any) => l.action === 'restore_success');
+      assert.ok(restoreSuccessLog, '应存在 restore_success 审计记录');
+      assert.equal(restoreSuccessLog.operator, 'AdminTest');
+      assert.equal(restoreSuccessLog.result, 'success');
+    });
+
+    it('5.10.11 回滚点应用成功：版本号递增 + 数据可回查', async () => {
+      const configBeforeRes = await httpRequestWithHeaders('/api/config', 'GET', ADMIN_HEADERS);
+      const versionBefore = JSON.parse(configBeforeRes.body).version;
+
+      const rbListRes = await httpRequestWithHeaders(
+        '/api/backup/rollback/list', 'GET', ADMIN_HEADERS
+      );
+      const rbPoints = JSON.parse(rbListRes.body).rollbackPoints;
+      assert.ok(rbPoints.length >= 1, '至少有一个回滚点');
+      const availableRb = rbPoints.find((r: any) => r.status === 'available');
+      assert.ok(availableRb, '应存在可回滚的回滚点');
+
+      const applyRes = await httpRequestWithHeaders(
+        `/api/backup/rollback/${availableRb.id}`, 'POST', ADMIN_HEADERS
+      );
+      assert.equal(applyRes.status, 200);
+      const applyResult = JSON.parse(applyRes.body);
+      assert.equal(applyResult.success, true);
+      assert.ok(applyResult.message.includes('回滚'));
+
+      const configAfterRes = await httpRequestWithHeaders('/api/config', 'GET', ADMIN_HEADERS);
+      const versionAfter = JSON.parse(configAfterRes.body).version;
+      const [maj, min, pat] = versionBefore.split('.').map(Number);
+      const expectedAfter = `${maj}.${min}.${pat + 1}`;
+      assert.equal(versionAfter, expectedAfter, '回滚后版本号应按 bumpVersion 递增');
+    });
+
+    it('5.10.12 旧版本备份覆盖新数据：未强制时拦截并给出冲突提示', async () => {
+      const dbModule = await import('../api/models/db.js');
+      const db = dbModule.db;
+      const saveDb = dbModule.saveDb;
+      await db.read();
+      const oldBackupSnapshot = JSON.parse(JSON.stringify(db.data));
+      oldBackupSnapshot.config = {
+        ...oldBackupSnapshot.config,
+        version: '0.0.1',
+        distanceThreshold: 999,
+      };
+      oldBackupSnapshot._meta = {
+        dataVersion: 1,
+        generatedAt: new Date().toISOString(),
+      };
+      const oldContent = Buffer.from(JSON.stringify(oldBackupSnapshot), 'utf-8');
+
+      const uploadRes = await uploadBackupFile(oldContent, 'old_version.json', ADMIN_HEADERS);
+      const uploadData = JSON.parse(uploadRes.body);
+      assert.ok(uploadData.preview);
+      const conflicts = uploadData.preview.validated.conflicts || [];
+      const versionConflict = conflicts.find((c: any) => c.type === 'config_version_downgrade');
+      assert.ok(versionConflict, '应检测到版本降级冲突');
+      assert.equal(versionConflict.severity, 'error');
+      assert.ok(versionConflict.message.includes('低于'));
+
+      const restoreWithoutForce = await httpRequestWithHeaders(
+        `/api/backup/restore/${uploadData.registeredBackupId}`,
+        'POST', ADMIN_HEADERS, JSON.stringify({ force: false }), 'application/json'
+      );
+      assert.equal(restoreWithoutForce.status, 400);
+      const restoreRes = JSON.parse(restoreWithoutForce.body);
+      assert.equal(restoreRes.success, false);
+      assert.ok(restoreRes.message.includes('强制覆盖'));
+    });
+
+    it('5.10.13 operator 可创建备份但不能恢复（权限拒绝）', async () => {
+      const createBody = JSON.stringify({ name: 'operator 创建的备份' });
+      const createRes = await httpRequestWithHeaders(
+        '/api/backup/create', 'POST', OPERATOR_HEADERS, createBody, 'application/json'
+      );
+      assert.equal(createRes.status, 200);
+      const created = JSON.parse(createRes.body);
+      assert.equal(created.success, true);
+
+      const restoreRes = await httpRequestWithHeaders(
+        `/api/backup/restore/${created.backup.id}`, 'POST', OPERATOR_HEADERS,
+        JSON.stringify({ force: false }), 'application/json'
+      );
+      assert.equal(restoreRes.status, 403);
+      const deny = JSON.parse(restoreRes.body);
+      assert.ok(deny.error.includes('权限') || deny.error.includes('admin'));
+    });
+
+    it('5.10.14 同一份备份重复导入应检测到重复（duplicate_backup 冲突）', async () => {
+      const listRes = await httpRequestWithHeaders('/api/backup', 'GET', ADMIN_HEADERS);
+      const backups = JSON.parse(listRes.body).backups;
+      assert.ok(backups.length >= 1);
+      const sampleBackup = backups[0];
+
+      const downloadRes = await new Promise<{ body: string }>((resolve, reject) => {
+        const options: http.RequestOptions = {
+          hostname: HOST, port: PORT,
+          path: `/api/backup/${sampleBackup.id}/download`,
+          method: 'GET',
+          headers: { ...ADMIN_HEADERS },
+        };
+        const req = http.request(options, (res) => {
+          let data = '';
+          res.on('data', (chunk) => { data += chunk; });
+          res.on('end', () => resolve({ body: data }));
+        });
+        req.on('error', reject);
+        req.end();
+      });
+
+      const uploadRes = await uploadBackupFile(
+        Buffer.from(downloadRes.body, 'utf-8'),
+        'duplicate_test.json',
+        ADMIN_HEADERS
+      );
+      const uploadData = JSON.parse(uploadRes.body);
+      assert.ok(uploadData.preview);
+      const conflicts = uploadData.preview.validated.conflicts || [];
+      const dup = conflicts.find((c: any) => c.type === 'duplicate_backup');
+      assert.ok(dup, '应检测到 duplicate_backup 冲突');
+      assert.equal(dup.severity, 'warning');
+    });
+
+    it('5.10.15 服务重启后数据一致性：备份、审计日志、回滚点持久化', async () => {
+      const dbModule = await import('../api/models/db.js');
+      const db = dbModule.db;
+
+      const beforeBackups = JSON.parse(JSON.stringify(db.data.backups));
+      const beforeAudit = JSON.parse(JSON.stringify(db.data.auditLogs));
+      const beforeRb = JSON.parse(JSON.stringify(db.data.rollbackPoints));
+      const beforeConfigVersion = db.data.config.version;
+
+      assert.ok(beforeBackups.length >= 1, '测试前应有备份');
+      assert.ok(beforeAudit.length >= 1, '测试前应有审计记录');
+      assert.ok(beforeRb.length >= 1, '测试前应有回滚点');
+
+      await db.read();
+
+      assert.equal(db.data.backups.length, beforeBackups.length);
+      assert.equal(db.data.auditLogs.length, beforeAudit.length);
+      assert.equal(db.data.rollbackPoints.length, beforeRb.length);
+      assert.equal(db.data.backups[0].id, beforeBackups[0].id);
+      assert.equal(db.data.config.version, beforeConfigVersion, '配置版本在重启后应保持一致');
+      assert.equal(db.data.configHistory[0]?.version, db.data.config.version,
+        '配置历史最新版本应与当前版本一致');
+    });
+
+    it('5.10.16 删除备份 + 对应审计记录', async () => {
+      const listBefore = await httpRequestWithHeaders('/api/backup', 'GET', ADMIN_HEADERS);
+      const backupsBefore = JSON.parse(listBefore.body).backups;
+      assert.ok(backupsBefore.length >= 1);
+
+      const toDelete = backupsBefore.find((b: any) => b.name === '测试备份_20260616') || backupsBefore[0];
+      const delRes = await httpRequestWithHeaders(
+        `/api/backup/${toDelete.id}`, 'DELETE', ADMIN_HEADERS
+      );
+      assert.equal(delRes.status, 200);
+      const del = JSON.parse(delRes.body);
+      assert.equal(del.success, true);
+
+      const listAfter = await httpRequestWithHeaders('/api/backup', 'GET', ADMIN_HEADERS);
+      const backupsAfter = JSON.parse(listAfter.body).backups;
+      assert.equal(backupsAfter.length, backupsBefore.length - 1);
+      assert.ok(!backupsAfter.some((b: any) => b.id === toDelete.id));
+
+      const auditRes = await httpRequestWithHeaders(
+        '/api/backup/audit/logs?limit=20', 'GET', ADMIN_HEADERS
+      );
+      const auditLogs = JSON.parse(auditRes.body).logs;
+      const delLog = auditLogs.find((l: any) => l.action === 'backup_delete');
+      assert.ok(delLog);
+      assert.equal(delLog.targetBackupId, toDelete.id);
+      assert.equal(delLog.result, 'success');
+    });
+  });
+
   describe('6. 错误路径与方法综合验证', () => {
     it('完全不存在的路径返回 404', async () => {
       const res = await httpRequest(HOST, PORT, '/api/nonexistent/foobar', 'GET');

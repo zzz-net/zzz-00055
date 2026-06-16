@@ -17,6 +17,7 @@ import importRoutes from './routes/import.js'
 import eventsRoutes from './routes/events.js'
 import configRoutes from './routes/config.js'
 import exportRoutes from './routes/export.js'
+import backupRoutes from './routes/backup.js'
 
 // for esm mode
 const __filename = fileURLToPath(import.meta.url)
@@ -40,6 +41,7 @@ app.use('/api/import', importRoutes)
 app.use('/api/events', eventsRoutes)
 app.use('/api/config', configRoutes)
 app.use('/api/export', exportRoutes)
+app.use('/api/backup', backupRoutes)
 
 /**
  * health

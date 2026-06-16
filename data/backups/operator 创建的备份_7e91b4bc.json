@@ -1,0 +1,810 @@
+{
+  "batches": [
+    {
+      "id": "6e925fd0-b99a-4ece-8608-cf7717de570a",
+      "name": "1781605424339-0.6474338876704433-roof_points_202606.csv",
+      "type": "points",
+      "status": "success",
+      "importedAt": "2026-06-16T10:23:44.344Z",
+      "totalRecords": 12,
+      "validRecords": 12,
+      "invalidRecords": 0,
+      "errors": []
+    },
+    {
+      "id": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+      "name": "1781605424349-0.28364576029769717-defects_202606.json",
+      "type": "defects",
+      "status": "success",
+      "importedAt": "2026-06-16T10:23:44.353Z",
+      "totalRecords": 8,
+      "validRecords": 8,
+      "invalidRecords": 0,
+      "errors": []
+    }
+  ],
+  "points": [
+    {
+      "id": "3a9db4c2-53ed-434c-8c1b-399e0bbe21fb",
+      "batchId": "6e925fd0-b99a-4ece-8608-cf7717de570a",
+      "pointCode": "P-001",
+      "x": 10.5,
+      "y": 20.3,
+      "z": 5.2,
+      "description": "屋顶东南角点位"
+    },
+    {
+      "id": "2631567e-378a-46f7-85da-19ad741e1a0e",
+      "batchId": "6e925fd0-b99a-4ece-8608-cf7717de570a",
+      "pointCode": "P-002",
+      "x": 12.1,
+      "y": 20.5,
+      "z": 5.3,
+      "description": "屋顶东南角相邻点位"
+    },
+    {
+      "id": "1cd11006-34fc-4940-84ed-d950ae82d58b",
+      "batchId": "6e925fd0-b99a-4ece-8608-cf7717de570a",
+      "pointCode": "P-003",
+      "x": 15,
+      "y": 20,
+      "z": 5.1,
+      "description": "屋顶中部点位"
+    },
+    {
+      "id": "c993c0b8-b75d-4879-b5f5-1ed43353fd1a",
+      "batchId": "6e925fd0-b99a-4ece-8608-cf7717de570a",
+      "pointCode": "P-004",
+      "x": 18.5,
+      "y": 20.2,
+      "z": 5,
+      "description": "屋顶中东部点位"
+    },
+    {
+      "id": "438109e0-6baf-4e43-abf0-0cd5a1a87ad6",
+      "batchId": "6e925fd0-b99a-4ece-8608-cf7717de570a",
+      "pointCode": "P-005",
+      "x": 22,
+      "y": 20.4,
+      "z": 5.2,
+      "description": "屋顶东北角点位"
+    },
+    {
+      "id": "9a9ab642-5938-4f65-9ada-368482dc9565",
+      "batchId": "6e925fd0-b99a-4ece-8608-cf7717de570a",
+      "pointCode": "P-006",
+      "x": 10.3,
+      "y": 25.5,
+      "z": 4.8,
+      "description": "屋顶南中部点位"
+    },
+    {
+      "id": "02198146-3013-42af-819a-63f91230b8e5",
+      "batchId": "6e925fd0-b99a-4ece-8608-cf7717de570a",
+      "pointCode": "P-007",
+      "x": 15.2,
+      "y": 25,
+      "z": 4.9,
+      "description": "屋顶中心点位"
+    },
+    {
+      "id": "231fd08a-fb4a-4af4-ac22-e5ca1a7d08cf",
+      "batchId": "6e925fd0-b99a-4ece-8608-cf7717de570a",
+      "pointCode": "P-008",
+      "x": 20,
+      "y": 25.3,
+      "z": 5,
+      "description": "屋顶北中部点位"
+    },
+    {
+      "id": "8d24cfdd-f849-4e83-9c39-d037766caa2a",
+      "batchId": "6e925fd0-b99a-4ece-8608-cf7717de570a",
+      "pointCode": "P-009",
+      "x": 10,
+      "y": 30,
+      "z": 4.7,
+      "description": "屋顶西南角点位"
+    },
+    {
+      "id": "4d11cf33-3130-44a8-bf26-b5a4a904c1e9",
+      "batchId": "6e925fd0-b99a-4ece-8608-cf7717de570a",
+      "pointCode": "P-010",
+      "x": 15.5,
+      "y": 30.2,
+      "z": 4.8,
+      "description": "屋顶西中部点位"
+    },
+    {
+      "id": "9b9b5ea9-7c29-4a1a-81b5-7f5efc482063",
+      "batchId": "6e925fd0-b99a-4ece-8608-cf7717de570a",
+      "pointCode": "P-011",
+      "x": 20.5,
+      "y": 30.5,
+      "z": 4.9,
+      "description": "屋顶西北角点位"
+    },
+    {
+      "id": "3d731808-0520-4050-b283-1df62550b729",
+      "batchId": "6e925fd0-b99a-4ece-8608-cf7717de570a",
+      "pointCode": "P-012",
+      "x": 11,
+      "y": 22,
+      "z": 5.1,
+      "description": "靠近P-001的缺陷点"
+    }
+  ],
+  "defects": [
+    {
+      "id": "aed01ad7-ec17-4572-a217-26358fe3728a",
+      "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+      "pointCode": "P-001",
+      "defectType": "crack",
+      "severity": "major",
+      "description": "屋顶东南角发现长度约30cm的横向裂缝",
+      "detectedAt": "2026-06-10T09:30:00Z"
+    },
+    {
+      "id": "bb326eae-9e58-481b-afa2-cbad66c8d430",
+      "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+      "pointCode": "P-002",
+      "defectType": "water_leakage",
+      "severity": "critical",
+      "description": "东南角相邻点位发现明显渗水痕迹",
+      "detectedAt": "2026-06-10T09:35:00Z"
+    },
+    {
+      "id": "4eeec8ac-a2e7-4c43-84ba-7cea8d1e1aca",
+      "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+      "pointCode": "P-003",
+      "defectType": "crack",
+      "severity": "medium",
+      "description": "屋顶中部发现长度约15cm的纵向裂缝",
+      "detectedAt": "2026-06-10T09:40:00Z"
+    },
+    {
+      "id": "fb40967c-ca44-4627-bb54-2488cafe59b1",
+      "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+      "pointCode": "P-005",
+      "defectType": "loose_material",
+      "severity": "minor",
+      "description": "屋顶东北角发现少量松散材料",
+      "detectedAt": "2026-06-10T09:45:00Z"
+    },
+    {
+      "id": "421024cc-c4dc-43b1-8f02-9e35a798b22f",
+      "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+      "pointCode": "P-007",
+      "defectType": "water_leakage",
+      "severity": "major",
+      "description": "屋顶中心发现渗水区域约0.5平方米",
+      "detectedAt": "2026-06-10T09:50:00Z"
+    },
+    {
+      "id": "2db81738-c9ed-4d5d-9475-fd38c92e87ef",
+      "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+      "pointCode": "P-009",
+      "defectType": "crack",
+      "severity": "critical",
+      "description": "屋顶西南角发现长度约50cm的贯穿性裂缝",
+      "detectedAt": "2026-06-10T09:55:00Z"
+    },
+    {
+      "id": "1c3e0320-b57a-4180-b4a5-7a100db279a2",
+      "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+      "pointCode": "P-011",
+      "defectType": "loose_material",
+      "severity": "medium",
+      "description": "屋顶西北角发现较多松散防水材料",
+      "detectedAt": "2026-06-10T10:00:00Z"
+    },
+    {
+      "id": "016de594-e156-49f1-8940-f768597de73d",
+      "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+      "pointCode": "P-012",
+      "defectType": "crack",
+      "severity": "minor",
+      "description": "靠近P-001处发现微小裂纹",
+      "detectedAt": "2026-06-10T10:05:00Z"
+    }
+  ],
+  "rectifications": [],
+  "events": [
+    {
+      "id": "ae3d3cf0-288d-48ac-8679-acf4d9f107a4",
+      "status": "pending",
+      "mergedDefectIds": [
+        "bb326eae-9e58-481b-afa2-cbad66c8d430",
+        "aed01ad7-ec17-4572-a217-26358fe3728a",
+        "4eeec8ac-a2e7-4c43-84ba-7cea8d1e1aca",
+        "016de594-e156-49f1-8940-f768597de73d"
+      ],
+      "primaryDefectId": "bb326eae-9e58-481b-afa2-cbad66c8d430",
+      "centerX": 12.15,
+      "centerY": 20.7,
+      "level": "一级",
+      "ruleVersion": "1.0.4",
+      "sourceEvidence": [
+        {
+          "type": "defect",
+          "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+          "batchName": "1781605424349-0.28364576029769717-defects_202606.json",
+          "recordId": "bb326eae-9e58-481b-afa2-cbad66c8d430",
+          "data": {
+            "id": "bb326eae-9e58-481b-afa2-cbad66c8d430",
+            "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+            "pointCode": "P-002",
+            "defectType": "water_leakage",
+            "severity": "critical",
+            "description": "东南角相邻点位发现明显渗水痕迹",
+            "detectedAt": "2026-06-10T09:35:00Z",
+            "x": 12.1,
+            "y": 20.5
+          }
+        },
+        {
+          "type": "defect",
+          "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+          "batchName": "1781605424349-0.28364576029769717-defects_202606.json",
+          "recordId": "aed01ad7-ec17-4572-a217-26358fe3728a",
+          "data": {
+            "id": "aed01ad7-ec17-4572-a217-26358fe3728a",
+            "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+            "pointCode": "P-001",
+            "defectType": "crack",
+            "severity": "major",
+            "description": "屋顶东南角发现长度约30cm的横向裂缝",
+            "detectedAt": "2026-06-10T09:30:00Z",
+            "x": 10.5,
+            "y": 20.3
+          }
+        },
+        {
+          "type": "defect",
+          "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+          "batchName": "1781605424349-0.28364576029769717-defects_202606.json",
+          "recordId": "4eeec8ac-a2e7-4c43-84ba-7cea8d1e1aca",
+          "data": {
+            "id": "4eeec8ac-a2e7-4c43-84ba-7cea8d1e1aca",
+            "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+            "pointCode": "P-003",
+            "defectType": "crack",
+            "severity": "medium",
+            "description": "屋顶中部发现长度约15cm的纵向裂缝",
+            "detectedAt": "2026-06-10T09:40:00Z",
+            "x": 15,
+            "y": 20
+          }
+        },
+        {
+          "type": "defect",
+          "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+          "batchName": "1781605424349-0.28364576029769717-defects_202606.json",
+          "recordId": "016de594-e156-49f1-8940-f768597de73d",
+          "data": {
+            "id": "016de594-e156-49f1-8940-f768597de73d",
+            "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+            "pointCode": "P-012",
+            "defectType": "crack",
+            "severity": "minor",
+            "description": "靠近P-001处发现微小裂纹",
+            "detectedAt": "2026-06-10T10:05:00Z",
+            "x": 11,
+            "y": 22
+          }
+        }
+      ],
+      "createdAt": "2026-06-16T10:23:44.355Z",
+      "updatedAt": "2026-06-16T10:23:44.876Z",
+      "reviewer": "验证员",
+      "reviewRemark": "README 复现测试",
+      "reviewedAt": "2026-06-16T10:23:44.372Z"
+    },
+    {
+      "id": "7578862a-4e36-4ed1-8172-8e6a644b030d",
+      "status": "pending",
+      "mergedDefectIds": [
+        "2db81738-c9ed-4d5d-9475-fd38c92e87ef"
+      ],
+      "primaryDefectId": "2db81738-c9ed-4d5d-9475-fd38c92e87ef",
+      "centerX": 10,
+      "centerY": 30,
+      "level": "一级",
+      "ruleVersion": "1.0.4",
+      "sourceEvidence": [
+        {
+          "type": "defect",
+          "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+          "batchName": "1781605424349-0.28364576029769717-defects_202606.json",
+          "recordId": "2db81738-c9ed-4d5d-9475-fd38c92e87ef",
+          "data": {
+            "id": "2db81738-c9ed-4d5d-9475-fd38c92e87ef",
+            "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+            "pointCode": "P-009",
+            "defectType": "crack",
+            "severity": "critical",
+            "description": "屋顶西南角发现长度约50cm的贯穿性裂缝",
+            "detectedAt": "2026-06-10T09:55:00Z",
+            "x": 10,
+            "y": 30
+          }
+        }
+      ],
+      "createdAt": "2026-06-16T10:23:44.876Z",
+      "updatedAt": "2026-06-16T10:23:44.876Z"
+    },
+    {
+      "id": "0cba6548-e634-4d7d-bfdf-57af3eb3c398",
+      "status": "pending",
+      "mergedDefectIds": [
+        "421024cc-c4dc-43b1-8f02-9e35a798b22f"
+      ],
+      "primaryDefectId": "421024cc-c4dc-43b1-8f02-9e35a798b22f",
+      "centerX": 15.2,
+      "centerY": 25,
+      "level": "二级",
+      "ruleVersion": "1.0.4",
+      "sourceEvidence": [
+        {
+          "type": "defect",
+          "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+          "batchName": "1781605424349-0.28364576029769717-defects_202606.json",
+          "recordId": "421024cc-c4dc-43b1-8f02-9e35a798b22f",
+          "data": {
+            "id": "421024cc-c4dc-43b1-8f02-9e35a798b22f",
+            "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+            "pointCode": "P-007",
+            "defectType": "water_leakage",
+            "severity": "major",
+            "description": "屋顶中心发现渗水区域约0.5平方米",
+            "detectedAt": "2026-06-10T09:50:00Z",
+            "x": 15.2,
+            "y": 25
+          }
+        }
+      ],
+      "createdAt": "2026-06-16T10:23:44.876Z",
+      "updatedAt": "2026-06-16T10:23:44.876Z"
+    },
+    {
+      "id": "020e0a63-a5b3-4f0a-8536-da98485e04ef",
+      "status": "pending",
+      "mergedDefectIds": [
+        "1c3e0320-b57a-4180-b4a5-7a100db279a2"
+      ],
+      "primaryDefectId": "1c3e0320-b57a-4180-b4a5-7a100db279a2",
+      "centerX": 20.5,
+      "centerY": 30.5,
+      "level": "三级",
+      "ruleVersion": "1.0.4",
+      "sourceEvidence": [
+        {
+          "type": "defect",
+          "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+          "batchName": "1781605424349-0.28364576029769717-defects_202606.json",
+          "recordId": "1c3e0320-b57a-4180-b4a5-7a100db279a2",
+          "data": {
+            "id": "1c3e0320-b57a-4180-b4a5-7a100db279a2",
+            "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+            "pointCode": "P-011",
+            "defectType": "loose_material",
+            "severity": "medium",
+            "description": "屋顶西北角发现较多松散防水材料",
+            "detectedAt": "2026-06-10T10:00:00Z",
+            "x": 20.5,
+            "y": 30.5
+          }
+        }
+      ],
+      "createdAt": "2026-06-16T10:23:44.876Z",
+      "updatedAt": "2026-06-16T10:23:44.876Z"
+    },
+    {
+      "id": "140256da-3483-4e2d-af91-54989e820a86",
+      "status": "pending",
+      "mergedDefectIds": [
+        "fb40967c-ca44-4627-bb54-2488cafe59b1"
+      ],
+      "primaryDefectId": "fb40967c-ca44-4627-bb54-2488cafe59b1",
+      "centerX": 22,
+      "centerY": 20.4,
+      "level": "四级",
+      "ruleVersion": "1.0.4",
+      "sourceEvidence": [
+        {
+          "type": "defect",
+          "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+          "batchName": "1781605424349-0.28364576029769717-defects_202606.json",
+          "recordId": "fb40967c-ca44-4627-bb54-2488cafe59b1",
+          "data": {
+            "id": "fb40967c-ca44-4627-bb54-2488cafe59b1",
+            "batchId": "6a7fde65-0d35-407b-9c36-38102aecb0bf",
+            "pointCode": "P-005",
+            "defectType": "loose_material",
+            "severity": "minor",
+            "description": "屋顶东北角发现少量松散材料",
+            "detectedAt": "2026-06-10T09:45:00Z",
+            "x": 22,
+            "y": 20.4
+          }
+        }
+      ],
+      "createdAt": "2026-06-16T10:23:44.876Z",
+      "updatedAt": "2026-06-16T10:23:44.876Z"
+    }
+  ],
+  "operationLogs": [
+    {
+      "id": "79b71640-00b9-4944-9b87-4f2ad105d54b",
+      "eventId": "ae3d3cf0-288d-48ac-8679-acf4d9f107a4",
+      "operator": "验证员",
+      "action": "add_remark",
+      "remark": "README 复现测试",
+      "operatedAt": "2026-06-16T10:23:44.372Z"
+    },
+    {
+      "id": "e96c4757-1606-441a-b252-003f2ff78ff0",
+      "eventId": "system",
+      "operator": "system",
+      "action": "rule_recalculated",
+      "remark": "规则版本从 1.0.3 更新到 1.0.4，重算 5 个事件",
+      "operatedAt": "2026-06-16T10:23:44.876Z"
+    }
+  ],
+  "config": {
+    "id": "default",
+    "distanceThreshold": 7.5,
+    "levelMapping": [
+      {
+        "severity": "critical",
+        "level": "一级",
+        "color": "#ef4444"
+      },
+      {
+        "severity": "major",
+        "level": "二级",
+        "color": "#f59e0b"
+      },
+      {
+        "severity": "medium",
+        "level": "三级",
+        "color": "#10b981"
+      },
+      {
+        "severity": "minor",
+        "level": "四级",
+        "color": "#6366f1"
+      }
+    ],
+    "version": "2.0.1",
+    "updatedAt": "2026-06-16T10:23:45.217Z",
+    "updatedBy": "AdminTest_rollback"
+  },
+  "configHistory": [
+    {
+      "id": "ef52c0f8-16c2-4168-9b67-858da27e5bcd",
+      "version": "2.0.1",
+      "action": "rollback",
+      "operator": "AdminTest",
+      "operatedAt": "2026-06-16T10:23:45.217Z",
+      "result": "success",
+      "trigger": "rollback",
+      "message": "回滚到 ID=e66a7b9b-aa35-45e3-9b1d-35584b58bc01 对应的状态，配置版本 v2.0.1",
+      "distanceThreshold": {
+        "before": 7.5,
+        "after": 7.5
+      },
+      "levelMapping": {
+        "before": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ],
+        "after": [
+          {
+            "severity": "critical",
+            "level": "一级",
+            "color": "#ef4444"
+          },
+          {
+            "severity": "major",
+            "level": "二级",
+            "color": "#f59e0b"
+          },
+          {
+            "severity": "medium",
+            "level": "三级",
+            "color": "#10b981"
+          },
+          {
+            "severity": "minor",
+            "level": "四级",
+            "color": "#6366f1"
+          }
+        ]
+      }
+    }
+  ],
+  "backups": [
+    {
+      "id": "5dafdd23-99f8-4ab5-8b28-72eb958a6a04",
+      "name": "导入_old_version_2026-06-16",
+      "description": "从页面上传的备份，原始文件名：old_version.json",
+      "createdAt": "2026-06-16T10:23:45.229Z",
+      "createdBy": "AdminTest_rollback",
+      "configVersion": "0.0.1",
+      "dataVersion": 1,
+      "fileSize": 17298,
+      "recordCounts": {
+        "batches": 2,
+        "points": 12,
+        "defects": 8,
+        "rectifications": 0,
+        "events": 5,
+        "operationLogs": 2,
+        "configHistory": 1
+      },
+      "filePath": "D:\\workSpace\\AI__SPACE\\zzz-00055\\data\\uploads\\backups\\1781605425231-tq2vrl-old_version.json",
+      "status": "available",
+      "checksum": "4b563ffa1b08d7ab9185dc8a1d8744c0185dba3375330c0c8078b754daf3fb6b"
+    },
+    {
+      "id": "3a2b8ddc-facb-4e0f-bf45-68f047be0d30",
+      "name": "测试备份_20260616",
+      "description": "API测试自动生成的备份",
+      "createdAt": "2026-06-16T10:23:44.990Z",
+      "createdBy": "AdminTest",
+      "configVersion": "2.0.0",
+      "dataVersion": 1,
+      "fileSize": 15744,
+      "recordCounts": {
+        "batches": 2,
+        "points": 12,
+        "defects": 8,
+        "rectifications": 0,
+        "events": 5,
+        "operationLogs": 2,
+        "configHistory": 0
+      },
+      "filePath": "D:\\workSpace\\AI__SPACE\\zzz-00055\\data\\backups\\测试备份_20260616_70e2a9e3.json",
+      "status": "restored",
+      "checksum": "15bf8f995b98899644e2a595502fa1e5c5be52670459d50754ac7c2722cbc8e2",
+      "restoredAt": "2026-06-16T10:23:45.192Z",
+      "restoredBy": "AdminTest"
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "c81d9b8e-b16c-4b74-aee9-6994746140b1",
+      "action": "restore_failed",
+      "operator": "AdminTest",
+      "operatorRole": "admin",
+      "targetBackupId": "5dafdd23-99f8-4ab5-8b28-72eb958a6a04",
+      "targetBackupName": "导入_old_version_2026-06-16",
+      "detail": {},
+      "result": "failed",
+      "message": "存在严重冲突，需要强制覆盖才能恢复，请带 force=true 参数重试",
+      "operatedAt": "2026-06-16T10:23:45.254Z",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "ba89d6d8-6cfa-4efb-a916-297c3fbaeab3",
+      "action": "restore_start",
+      "operator": "AdminTest",
+      "operatorRole": "admin",
+      "targetBackupId": "5dafdd23-99f8-4ab5-8b28-72eb958a6a04",
+      "targetBackupName": "导入_old_version_2026-06-16",
+      "detail": {
+        "force": false
+      },
+      "result": "success",
+      "message": "开始恢复备份：导入_old_version_2026-06-16",
+      "operatedAt": "2026-06-16T10:23:45.248Z",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "e1b40070-ee84-4ef6-a930-2c61650c6280",
+      "action": "backup_upload",
+      "operator": "AdminTest",
+      "operatorRole": "admin",
+      "targetBackupId": "5dafdd23-99f8-4ab5-8b28-72eb958a6a04",
+      "targetBackupName": "old_version.json",
+      "detail": {
+        "validated": true,
+        "hasConflicts": true
+      },
+      "result": "success",
+      "message": "上传备份成功：old_version.json",
+      "operatedAt": "2026-06-16T10:23:45.242Z",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "eaaa74db-672a-470b-a4ad-4e4f7a8c71bf",
+      "action": "rollback_apply",
+      "operator": "AdminTest",
+      "operatorRole": "admin",
+      "targetBackupId": "3a2b8ddc-facb-4e0f-bf45-68f047be0d30",
+      "detail": {
+        "rollbackPointId": "e66a7b9b-aa35-45e3-9b1d-35584b58bc01",
+        "restoredConfigVersion": "2.0.1"
+      },
+      "result": "success",
+      "message": "已成功回滚到之前的状态，当前配置版本 v2.0.1",
+      "operatedAt": "2026-06-16T10:23:45.220Z",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "78f43b1b-06a3-4af4-a99e-d0e6c6fec185",
+      "action": "rollback_apply",
+      "operator": "AdminTest",
+      "operatorRole": "admin",
+      "targetBackupId": "3a2b8ddc-facb-4e0f-bf45-68f047be0d30",
+      "detail": {
+        "rollbackPointId": "e66a7b9b-aa35-45e3-9b1d-35584b58bc01"
+      },
+      "result": "success",
+      "message": "开始应用回滚点：恢复前回滚点_20260616102345",
+      "operatedAt": "2026-06-16T10:23:45.212Z",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "e4824cf5-9fd6-4b96-81e5-90d25f0f3e64",
+      "action": "restore_success",
+      "operator": "AdminTest",
+      "operatorRole": "admin",
+      "targetBackupId": "3a2b8ddc-facb-4e0f-bf45-68f047be0d30",
+      "targetBackupName": "测试备份_20260616",
+      "detail": {
+        "rollbackPointId": "e66a7b9b-aa35-45e3-9b1d-35584b58bc01",
+        "restoredConfigVersion": "2.0.0"
+      },
+      "result": "success",
+      "message": "恢复成功，当前配置版本 v2.0.0。回滚点已创建（24小时内可回滚）",
+      "operatedAt": "2026-06-16T10:23:45.195Z",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "65cbe7dc-d58a-4ab7-8226-51dbef786d38",
+      "action": "restore_start",
+      "operator": "AdminTest",
+      "operatorRole": "admin",
+      "targetBackupId": "3a2b8ddc-facb-4e0f-bf45-68f047be0d30",
+      "targetBackupName": "测试备份_20260616",
+      "detail": {
+        "force": false
+      },
+      "result": "success",
+      "message": "开始恢复备份：测试备份_20260616",
+      "operatedAt": "2026-06-16T10:23:45.181Z",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "1a764f7e-5df8-4c03-9653-63920ee4223a",
+      "action": "restore_preview",
+      "operator": "AdminTest",
+      "operatorRole": "admin",
+      "targetBackupId": "3a2b8ddc-facb-4e0f-bf45-68f047be0d30",
+      "targetBackupName": "测试备份_20260616",
+      "detail": {
+        "canRestore": true
+      },
+      "result": "success",
+      "message": "预览备份差异：测试备份_20260616",
+      "operatedAt": "2026-06-16T10:23:45.167Z",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "bef43732-6d56-466a-a103-cd06e9d629aa",
+      "action": "backup_upload",
+      "operator": "AdminTest",
+      "operatorRole": "admin",
+      "targetBackupName": "no_config.json",
+      "detail": {
+        "validated": false,
+        "hasConflicts": true
+      },
+      "result": "failed",
+      "message": "上传备份校验失败：备份结构不完整",
+      "operatedAt": "2026-06-16T10:23:45.154Z",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "e72b49f2-2f4b-468d-8c67-0b849e5a4857",
+      "action": "backup_upload",
+      "operator": "AdminTest",
+      "operatorRole": "admin",
+      "result": "failed",
+      "message": "上传的文件不是有效的 JSON",
+      "operatedAt": "2026-06-16T10:23:45.141Z",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "aecd777c-28f6-43d3-bb4e-0ef5ebfa8bc7",
+      "action": "backup_upload",
+      "operator": "ViewerWang",
+      "operatorRole": "viewer",
+      "result": "denied",
+      "message": "无权限上传备份（仅 admin 可上传恢复）",
+      "operatedAt": "2026-06-16T10:23:45.097Z",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "fe49b025-dab9-497a-9410-cf5324bb490d",
+      "action": "backup_download",
+      "operator": "AdminTest",
+      "operatorRole": "admin",
+      "targetBackupId": "3a2b8ddc-facb-4e0f-bf45-68f047be0d30",
+      "targetBackupName": "测试备份_20260616",
+      "result": "success",
+      "message": "下载备份：测试备份_20260616",
+      "operatedAt": "2026-06-16T10:23:45.043Z",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "f1e7240e-ba17-4607-b211-0b1604592c0f",
+      "action": "backup_create",
+      "operator": "AdminTest",
+      "operatorRole": "admin",
+      "targetBackupId": "3a2b8ddc-facb-4e0f-bf45-68f047be0d30",
+      "targetBackupName": "测试备份_20260616",
+      "detail": {
+        "recordCounts": {
+          "batches": 2,
+          "points": 12,
+          "defects": 8,
+          "rectifications": 0,
+          "events": 5,
+          "operationLogs": 2,
+          "configHistory": 0
+        },
+        "configVersion": "2.0.0"
+      },
+      "result": "success",
+      "message": "创建备份成功：测试备份_20260616",
+      "operatedAt": "2026-06-16T10:23:45.011Z",
+      "ipAddress": "127.0.0.1"
+    }
+  ],
+  "rollbackPoints": [
+    {
+      "id": "e66a7b9b-aa35-45e3-9b1d-35584b58bc01",
+      "name": "恢复前回滚点_20260616102345",
+      "createdAt": "2026-06-16T10:23:45.190Z",
+      "createdBy": "AdminTest",
+      "expiresAt": "2026-06-17T10:23:45.190Z",
+      "filePath": "D:\\workSpace\\AI__SPACE\\zzz-00055\\data\\rollbacks\\rollback_20260616102345_d29b335e.json",
+      "fileSize": 19777,
+      "checksum": "15bf8f995b98899644e2a595502fa1e5c5be52670459d50754ac7c2722cbc8e2",
+      "preRestoreSnapshot": {
+        "configVersion": "2.0.0",
+        "configVersionBefore": "2.0.0",
+        "configVersionAfter": "2.0.0"
+      },
+      "status": "applied",
+      "relatedRestoreBackupId": "3a2b8ddc-facb-4e0f-bf45-68f047be0d30",
+      "appliedAt": "2026-06-16T10:23:45.217Z",
+      "appliedBy": "AdminTest"
+    }
+  ],
+  "_meta": {
+    "dataVersion": 1,
+    "generatedAt": "2026-06-16T10:23:45.261Z",
+    "checksum": "14971eed53ab79b7e060fef506ddf8081f87e476cab16f2f3245ffa6e406ab26"
+  }
+}

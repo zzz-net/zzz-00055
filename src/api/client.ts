@@ -1,4 +1,4 @@
-import { Batch, Event, Config, EventStatus, ValidationError, EventDetailResponse, ConfigHistory, ExportSummary } from '../../shared/types';
+import { Batch, Event, Config, EventStatus, ValidationError, EventDetailResponse, ConfigHistory, ExportSummary, BackupRecord, BackupPreviewResponse, RestoreResult, RollbackPoint, AuditLog, UserRole } from '../../shared/types';
 
 const API_BASE = '/api';
 
@@ -154,5 +154,95 @@ export const api = {
     fullJSON: () => {
       window.open(`${API_BASE}/export/full/json`, '_blank');
     },
+  },
+  
+  backup: {
+    getPermissions: () => request<{
+      success: boolean;
+      user: { username: string; role: UserRole };
+      permissions: {
+        canView: boolean;
+        canCreate: boolean;
+        canRestore: boolean;
+        canRollback: boolean;
+        canDelete: boolean;
+      };
+    }>('/backup/permissions/check'),
+
+    list: () => request<{ success: boolean; backups: BackupRecord[] }>('/backup'),
+
+    get: (id: string) => request<{ success: boolean; backup: BackupRecord }>(`/backup/${id}`),
+
+    create: (data?: { name?: string; description?: string }) =>
+      request<{ success: boolean; backup: BackupRecord }>('/backup/create', {
+        method: 'POST',
+        body: JSON.stringify(data || {}),
+      }),
+
+    download: (id: string) => {
+      window.open(`${API_BASE}/backup/${id}/download`, '_blank');
+    },
+
+    delete: (id: string) =>
+      request<{ success: boolean }>(`/backup/${id}`, {
+        method: 'DELETE',
+      }),
+
+    upload: (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return request<{
+        success: boolean;
+        preview?: BackupPreviewResponse;
+        registeredBackupId?: string;
+        tempFilePath?: string;
+        error?: string;
+      }>('/backup/upload', {
+        method: 'POST',
+        body: formData,
+        headers: {},
+      });
+    },
+
+    preview: (id: string) =>
+      request<{ success: boolean; preview: BackupPreviewResponse; backup: BackupRecord }>(`/backup/preview/${id}`, {
+        method: 'POST',
+      }),
+
+    restore: (id: string, force?: boolean) =>
+      request<RestoreResult & { error?: string }>(`/backup/restore/${id}`, {
+        method: 'POST',
+        body: JSON.stringify({ force: force === true }),
+      }),
+
+    restoreFromUpload: (filePath: string, force?: boolean, backupId?: string) =>
+      request<RestoreResult & { error?: string }>('/backup/restore-from-upload', {
+        method: 'POST',
+        body: JSON.stringify({ filePath, force: force === true, backupId }),
+      }),
+
+    clearInterrupted: () =>
+      request<{ success: boolean; cleared: boolean }>('/backup/status/interrupted'),
+
+    rollbackList: () =>
+      request<{ success: boolean; rollbackPoints: RollbackPoint[] }>('/backup/rollback/list'),
+
+    rollbackApply: (rollbackId: string) =>
+      request<RestoreResult & { error?: string }>(`/backup/rollback/${rollbackId}`, {
+        method: 'POST',
+      }),
+
+    rollbackDelete: (rollbackId: string) =>
+      request<{ success: boolean }>(`/backup/rollback/${rollbackId}`, {
+        method: 'DELETE',
+      }),
+
+    auditLogs: (limit?: number) => {
+      const query = limit ? `?limit=${limit}` : '';
+      return request<{ success: boolean; logs: AuditLog[] }>(`/backup/audit/logs${query}`);
+    },
+
+    auditLogsByBackup: (backupId: string) =>
+      request<{ success: boolean; logs: AuditLog[] }>(`/backup/audit/backup/${backupId}`),
   },
 };

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Settings, Ruler, Palette, RotateCcw, Save, History, ArrowRight, AlertTriangle, Download, Upload, XCircle, SkipForward, RefreshCcw, Zap } from 'lucide-react';
+import { Settings, Ruler, Palette, RotateCcw, Save, History, ArrowRight, AlertTriangle, XCircle, SkipForward, RefreshCcw, Zap, HardDrive, ArrowUpRight, Download, Upload } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
 import { api } from '../api/client';
 import { useToast } from '../components/common/Toast';
@@ -24,6 +25,7 @@ const COLOR_PRESETS = [
 
 export function Config() {
   const { addToast } = useToast();
+  const navigate = useNavigate();
   const { config, configHistory, loadConfig, loadConfigHistory, loading, updateConfig: updateStoreConfig } = useAppStore();
   const [distanceThreshold, setDistanceThreshold] = useState<number>(5.0);
   const [levelMapping, setLevelMapping] = useState<LevelMappingItem[]>([]);
@@ -32,7 +34,6 @@ export function Config() {
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [conflictData, setConflictData] = useState<{ message?: string; currentVersion?: string; currentConfig?: ConfigType } | null>(null);
   const [conflictRetryFn, setConflictRetryFn] = useState<((force: boolean) => Promise<void>) | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadConfig();
@@ -138,49 +139,6 @@ export function Config() {
       }
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleExportFull = () => {
-    api.export.fullJSON();
-    addToast('info', '正在导出完整备份...');
-  };
-
-  const handleImportClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!confirm('确定要导入完整数据吗？这将覆盖当前所有数据。')) {
-      e.target.value = '';
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      const result = await api.import.fullData(file);
-      
-      if (result.success) {
-        addToast('success', result.message);
-        if (result.warnings && result.warnings.length > 0) {
-          result.warnings.forEach(w => addToast('warning', w));
-        }
-        await Promise.all([loadConfig(), loadConfigHistory()]);
-      } else {
-        addToast('error', result.message || '导入失败');
-      }
-    } catch (err: unknown) {
-      const e = err as { message?: string };
-      addToast('error', e.message || '导入失败');
-    } finally {
-      setSaving(false);
-      e.target.value = '';
     }
   };
 
@@ -358,30 +316,14 @@ export function Config() {
           </div>
 
           <div className="flex gap-3 ml-auto">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json"
-              onChange={handleImportFile}
-              className="hidden"
-            />
             <button
-              onClick={handleExportFull}
-              disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded font-medium transition-colors"
-              title="导出完整数据备份（JSON）"
+              onClick={() => navigate('/backup')}
+              className="flex items-center gap-2 px-4 py-2 bg-violet-700 hover:bg-violet-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded font-medium transition-colors"
+              title="进入完整的备份恢复中心（创建、导入、恢复、回滚等）"
             >
-              <Download size={16} />
-              导出备份
-            </button>
-            <button
-              onClick={handleImportClick}
-              disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded font-medium transition-colors"
-              title="导入完整数据备份（JSON）"
-            >
-              <Upload size={16} />
-              导入备份
+              <HardDrive size={16} />
+              备份恢复中心
+              <ArrowUpRight size={14} />
             </button>
             <button
               onClick={() => handleReset(false)}

@@ -94,7 +94,7 @@ export interface OperationLog {
   operatedAt: string;
 }
 
-export type ConfigHistoryAction = 'save' | 'reset' | 'force_save' | 'conflict_failed' | 'skip_duplicate' | 'import' | 'force_reset';
+export type ConfigHistoryAction = 'save' | 'reset' | 'force_save' | 'conflict_failed' | 'skip_duplicate' | 'import' | 'force_reset' | 'rollback';
 
 export interface ConfigHistory {
   id: string;
@@ -103,7 +103,7 @@ export interface ConfigHistory {
   operator: string;
   operatedAt: string;
   result: 'success' | 'failed' | 'skipped';
-  trigger: 'user' | 'system' | 'import';
+  trigger: 'user' | 'system' | 'import' | 'rollback';
   conflictNote?: string;
   message?: string;
   distanceThreshold: {
@@ -131,6 +131,145 @@ export interface LevelMappingItem {
   color: string;
 }
 
+export type UserRole = 'admin' | 'viewer' | 'operator';
+
+export interface BackupRecord {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  createdBy: string;
+  configVersion: string;
+  dataVersion: number;
+  fileSize: number;
+  recordCounts: {
+    batches: number;
+    points: number;
+    defects: number;
+    rectifications: number;
+    events: number;
+    operationLogs: number;
+    configHistory: number;
+  };
+  filePath?: string;
+  status: 'available' | 'restoring' | 'restored' | 'rollback' | 'failed';
+  checksum: string;
+  restoredAt?: string;
+  restoredBy?: string;
+}
+
+export type BackupAction =
+  | 'backup_create'
+  | 'backup_download'
+  | 'backup_delete'
+  | 'backup_upload'
+  | 'restore_preview'
+  | 'restore_start'
+  | 'restore_success'
+  | 'restore_failed'
+  | 'restore_interrupted'
+  | 'rollback_create'
+  | 'rollback_apply'
+  | 'rollback_delete';
+
+export interface AuditLog {
+  id: string;
+  action: BackupAction;
+  operator: string;
+  operatorRole: UserRole;
+  targetBackupId?: string;
+  targetBackupName?: string;
+  detail?: Record<string, unknown>;
+  result: 'success' | 'failed' | 'skipped' | 'denied';
+  message?: string;
+  operatedAt: string;
+  ipAddress?: string;
+}
+
+export interface RollbackPoint {
+  id: string;
+  name: string;
+  createdAt: string;
+  createdBy: string;
+  expiresAt: string;
+  filePath: string;
+  fileSize: number;
+  checksum: string;
+  preRestoreSnapshot: {
+    configVersion: string;
+    configVersionBefore?: string;
+    configVersionAfter?: string;
+  };
+  status: 'available' | 'applied' | 'expired' | 'deleted';
+  appliedAt?: string;
+  appliedBy?: string;
+  relatedRestoreBackupId?: string;
+}
+
+export interface BackupValidateResult {
+  valid: boolean;
+  version?: {
+    backupVersion: string;
+    currentVersion: string;
+    isOlder: boolean;
+    isSame: boolean;
+    isNewer: boolean;
+  };
+  structure?: {
+    valid: boolean;
+    missingFields: string[];
+    extraFields: string[];
+  };
+  format?: {
+    valid: boolean;
+    checksumMatch?: boolean;
+    jsonParseable?: boolean;
+  };
+  conflicts?: BackupConflictItem[];
+  warnings?: string[];
+  errors?: string[];
+  summary?: string;
+}
+
+export interface BackupConflictItem {
+  type: 'config_version_downgrade' | 'duplicate_backup' | 'data_loss_risk' | 'restore_in_progress' | 'record_conflict';
+  severity: 'error' | 'warning' | 'info';
+  field?: string;
+  backupValue?: unknown;
+  currentValue?: unknown;
+  message: string;
+  suggestion?: string;
+  canOverride: boolean;
+}
+
+export interface BackupDiffItem {
+  section: 'config' | 'record_counts' | 'config_history_latest';
+  field: string;
+  backupValue: unknown;
+  currentValue: unknown;
+  changed: boolean;
+}
+
+export interface BackupPreviewResponse {
+  validated: BackupValidateResult;
+  diff: BackupDiffItem[];
+  backupMeta: Pick<BackupRecord, 'name' | 'configVersion' | 'createdAt' | 'createdBy' | 'recordCounts'>;
+  canRestore: boolean;
+  reason?: string;
+}
+
+export interface RestoreResult {
+  success: boolean;
+  rollbackPointId?: string;
+  restoredConfigVersion?: string;
+  message: string;
+  warnings?: string[];
+  details?: {
+    recordsRestored: Record<string, number>;
+    durationMs: number;
+  };
+}
+
 export interface Database {
   batches: Batch[];
   points: Point[];
@@ -140,6 +279,9 @@ export interface Database {
   operationLogs: OperationLog[];
   config: Config;
   configHistory: ConfigHistory[];
+  backups: BackupRecord[];
+  auditLogs: AuditLog[];
+  rollbackPoints: RollbackPoint[];
 }
 
 export const STATUS_LABELS: Record<EventStatus, string> = {
